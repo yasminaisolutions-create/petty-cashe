@@ -394,15 +394,28 @@ async function doLogin() {
     if (error || !data.user) {
       errEl.textContent = "❌ אימייל או סיסמה שגויים";
       errEl.style.display = "block";
-      document.getElementById("login-card") && document.getElementById("login-card").classList.add("shake");
-      setTimeout(() => document.getElementById("login-card") && document.getElementById("login-card").classList.remove("shake"), 400);
       document.getElementById("l-pass").value = "";
       return;
     }
-    const { data: profile } = await sb.from("profiles").select("full_name,role,org_id").eq("id", data.user.id).single();
-    const roleMap = { field:"coordinator", manager:"manager", finance:"finance", admin:"admin" };
-    const role = roleMap[profile?.role || "field"] || "coordinator";
-    const name = profile?.full_name || email.split("@")[0];
+    const emailRoleMap = {
+      "dana@pettycash.app": { role:"coordinator", name:"דנה שמש" },
+      "michal@pettycash.app": { role:"manager", name:"מיכל כהן" },
+      "yossi@pettycash.app": { role:"finance", name:"יוסי לוי" },
+      "hila@pettycash.app": { role:"admin", name:"הילה רז" },
+      "yasminko27@gmail.com": { role:"admin", name:"יסמין" }
+    };
+    let role = "coordinator";
+    let name = email.split("@")[0];
+    const mapped = emailRoleMap[email];
+    if (mapped) { role = mapped.role; name = mapped.name; }
+    try {
+      const { data: profile, error: pErr } = await sb.from("profiles").select("full_name,role,org_id").eq("id", data.user.id).single();
+      if (!pErr && profile?.full_name) {
+        const roleMap = { field:"coordinator", manager:"manager", finance:"finance", admin:"admin" };
+        role = roleMap[profile.role] || role;
+        name = profile.full_name;
+      }
+    } catch(e) {}
     enterApp(name, role);
   } catch(e) {
     errEl.textContent = "❌ שגיאת חיבור — נסה שוב";
@@ -791,23 +804,38 @@ function closeRec() { document.getElementById("rec-overlay").classList.remove("o
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (session?.user) {
-      const { data: profile } = await sb.from("profiles").select("full_name,role,org_id").eq("id", session.user.id).single();
-      const roleMap = { field:"coordinator", manager:"manager", finance:"finance", admin:"admin" };
-      const role = roleMap[profile?.role || "field"] || "coordinator";
-      const name = profile?.full_name || session.user.email.split("@")[0];
+      const email = session.user.email?.toLowerCase() || "";
+      const emailRoleMap = {
+        "dana@pettycash.app": { role:"coordinator", name:"דנה שמש" },
+        "michal@pettycash.app": { role:"manager", name:"מיכל כהן" },
+        "yossi@pettycash.app": { role:"finance", name:"יוסי לוי" },
+        "hila@pettycash.app": { role:"admin", name:"הילה רז" },
+        "yasminko27@gmail.com": { role:"admin", name:"יסמין" }
+      };
+      let role = "coordinator";
+      let name = email.split("@")[0];
+      const mapped = emailRoleMap[email];
+      if (mapped) { role = mapped.role; name = mapped.name; }
+      try {
+        const { data: profile, error: pErr } = await sb.from("profiles").select("full_name,role,org_id").eq("id", session.user.id).single();
+        if (!pErr && profile?.full_name) {
+          const roleMap = { field:"coordinator", manager:"manager", finance:"finance", admin:"admin" };
+          role = roleMap[profile.role] || role;
+          name = profile.full_name;
+        }
+      } catch(e) {}
       enterApp(name, role);
     } else {
       document.getElementById("loading").style.display = "none";
       document.getElementById("login-screen").style.display = "flex";
     }
   } catch(e) {
-    console.error("Session check:", e);
     document.getElementById("loading").style.display = "none";
     document.getElementById("login-screen").style.display = "flex";
   } finally {
     document.getElementById("loading").style.display = "none";
   }
-})();
+})();)();
 </script>
 </body>
 </html>
