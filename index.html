@@ -7,276 +7,816 @@
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-<html lang="he" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PettyCash AI</title>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>
-<style>
-:root{--bg:#F0F4F8;--white:#fff;--blue:#3B82F6;--blue-dk:#1D4ED8;--blue-lt:#EFF6FF;--blue-mid:#BFDBFE;--text:#1E293B;--text-lt:#64748B;--border:#E2E8F0;--danger:#EF4444;--danger-lt:#FEF2F2;--ok:#22C55E;--ok-lt:#F0FDF4;--warn:#F59E0B;--warn-lt:#FFFBEB;--shadow:0 1px 3px rgba(0,0,0,.1)}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Heebo",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
+:root{--green:#16a34a;--yellow:#d97706;--red:#dc2626;--blue:#2563eb;--purple:#7c3aed;--bg:#f0fdf4;--card:#ffffff;--text:#1a2e1a;--border:#d1fae5;--accent:#059669}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
 #loading{position:fixed;inset:0;background:linear-gradient(135deg,#EFF6FF,#F0FDF4);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
-.spinner{width:40px;height:40px;border:3px solid var(--border);border-top:3px solid var(--blue);border-radius:50%;animation:spin 1s linear infinite;margin-top:16px}
+.logo-big{font-size:48px;font-weight:900;color:var(--accent);margin-bottom:8px}
+.logo-big span{color:var(--purple)}
+.spinner{width:40px;height:40px;border:4px solid #d1fae5;border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-top:20px}
 @keyframes spin{to{transform:rotate(360deg)}}
-#toast-c{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:8px;min-width:300px}
+@keyframes slideIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+#toast-container{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:8px}
 .toast{padding:12px 20px;border-radius:10px;font-weight:600;font-size:14px;animation:slideIn .3s ease;text-align:center}
-.toast.ok{background:var(--ok-lt);color:#166534;border:1px solid #bbf7d0}
-.toast.err{background:var(--danger-lt);color:#991b1b;border:1px solid #fecaca}
-.toast.warn{background:var(--warn-lt);color:#92400e;border:1px solid #fde68a}
-@keyframes slideIn{from{transform:translateX(60px);opacity:0}to{transform:translateX(0);opacity:1}}
-#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;display:none}
-.login-card{background:var(--white);border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 10px 40px rgba(0,0,0,.12)}
-.login-logo{text-align:center;margin-bottom:28px}
-.login-logo h1{font-size:30px;font-weight:900;color:var(--blue)}
-.login-logo h1 span{color:var(--text)}
-.login-logo p{font-size:14px;color:var(--text-lt);margin-top:4px}
-.fg{margin-bottom:16px}
-.fg label{display:block;font-size:13px;font-weight:600;color:var(--text-lt);margin-bottom:6px}
-.fg input,.fg select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;color:var(--text);background:var(--bg)}
-.fg input:focus,.fg select:focus{outline:none;border-color:var(--blue);background:var(--white)}
-.btn-login{width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px}
-.btn-login:hover{background:var(--blue-dk)}
-.btn-login:disabled{opacity:.6;cursor:not-allowed}
-.login-err{display:none;background:var(--danger-lt);color:var(--danger);border:1px solid #fecaca;border-radius:8px;padding:10px 14px;font-size:13px;margin-top:12px;text-align:center}
-.demo-hint{margin-top:20px;border:1.5px solid var(--border);border-radius:12px;overflow:hidden}
-.demo-hint-hdr{padding:10px 16px;background:var(--bg);font-size:13px;font-weight:600;color:var(--text-lt);cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none}
-.demo-hint-body{display:none;padding:12px}
-.demo-hint-body.open{display:block}
-.dc{padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;transition:all .2s}
-.dc:hover{border-color:var(--blue);background:var(--blue-lt)}
+.toast.ok{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7}
+.toast.err{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.toast.info{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+#login-screen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px}
+.login-box{background:var(--card);border-radius:20px;padding:32px;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(0,0,0,0.08)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo .name{font-size:28px;font-weight:900;color:var(--accent)}
+.login-logo .name span{color:var(--purple)}
+.login-logo .sub{font-size:13px;color:#6b7280;margin-top:4px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
+.form-group input,.form-group select{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:'Heebo',sans-serif;background:#fff;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--accent)}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#047857);color:#fff}
+.btn-primary:hover{opacity:0.9;transform:translateY(-1px)}
+.btn-secondary{background:#f3f4f6;color:#374151;margin-top:8px}
+.demo-cards{margin-top:24px}
+.demo-title{font-size:12px;font-weight:700;color:#9ca3af;text-align:center;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+.dc{background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px}
+.dc:hover{border-color:var(--accent);background:#f0fdf4}
+.dc-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
 .dc .dc-name{font-weight:700;font-size:14px}
-.dc .dc-email{font-size:12px;color:var(--text-lt)}
-.dc-role{font-size:11px;font-weight:700;margin-top:4px;padding:2px 8px;border-radius:20px;display:inline-block}
-.badge-admin{background:#fce7f3;color:#9d174d}.badge-field{background:#dbeafe;color:#1d4ed8}.badge-manager{background:#dcfce7;color:#166534}.badge-finance{background:#fef3c7;color:#92400e}
-#app{display:none}
-.app-header{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.app-logo{font-size:20px;font-weight:900;color:var(--blue)}
-.app-logo span{color:var(--text)}
-.header-right{display:flex;align-items:center;gap:12px}
-.user-chip{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg);border-radius:20px;font-size:13px}
-.role-dot{width:8px;height:8px;border-radius:50%}
-.dot-admin{background:#ec4899}.dot-field{background:#3b82f6}.dot-manager{background:#22c55e}.dot-finance{background:#f59e0b}
-.btn-sm{padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--white);font-family:inherit;font-size:13px;font-weight:600;color:var(--text-lt);cursor:pointer}
-.btn-sm:hover{border-color:var(--danger);color:var(--danger)}
-.role-bar{background:var(--blue-lt);border-bottom:1px solid var(--blue-mid);padding:8px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.role-bar label{font-size:12px;font-weight:700;color:var(--blue-dk)}
-.rbtn{padding:5px 14px;border:1.5px solid var(--blue-mid);border-radius:20px;background:var(--white);font-family:inherit;font-size:12px;font-weight:600;color:var(--blue-dk);cursor:pointer;transition:all .2s}
-.rbtn.active,.rbtn:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
-.main-nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:2px;overflow-x:auto}
-.ntab{padding:14px 16px;border:none;background:none;font-family:inherit;font-size:14px;font-weight:500;color:var(--text-lt);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;transition:all .2s;position:relative}
-.ntab:hover{color:var(--blue)}
-.ntab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:700}
-.ntab .badge{position:absolute;top:8px;right:4px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px}
-.app-body{padding:24px;max-width:1100px;margin:0 auto}
-.page{display:none}
+.dc .dc-role{font-size:12px;color:#6b7280}
+#app{display:none;flex-direction:column;min-height:100vh}
+.topbar{background:linear-gradient(135deg,var(--accent),#047857);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+.topbar-title{font-size:18px;font-weight:700}
+.topbar-user{font-size:13px;opacity:0.9;cursor:pointer}
+.admin-bar{background:#7c3aed;color:#fff;padding:8px 20px;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.admin-bar span{font-weight:600}
+.view-btn{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;cursor:pointer;font-family:'Heebo',sans-serif}
+.view-btn.active{background:#fff;color:#7c3aed;font-weight:700}
+.nav-tabs{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;padding:0 12px}
+.nav-tab{padding:12px 16px;font-size:14px;font-weight:600;color:#6b7280;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .2s}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.page{display:none;padding:16px;max-width:600px;margin:0 auto;width:100%}
 .page.active{display:block}
-.page-title{font-size:22px;font-weight:800;margin-bottom:20px}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:24px}
-.stat{background:var(--white);border-radius:12px;padding:20px;text-align:center}
-.stat .num{font-size:28px;font-weight:900;color:var(--blue)}
-.stat .lbl{font-size:12px;color:var(--text-lt);margin-top:4px;font-weight:600}
-.card{background:var(--white);border-radius:12px;padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
-.card-title{font-size:15px;font-weight:700;margin-bottom:16px}
-.btn{padding:9px 16px;border:none;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
-.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue-dk)}
-.btn-ok{background:var(--ok);color:#fff}
-.btn-danger{background:var(--danger);color:#fff}
-.btn-outline{background:var(--white);color:var(--blue);border:1.5px solid var(--blue)}
-.scan-btn{width:100%;padding:20px;background:linear-gradient(135deg,var(--blue),var(--blue-dk));color:#fff;border:none;border-radius:16px;font-family:inherit;font-size:18px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px;flex-direction:column}
-.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
-.modal-ov.open{display:flex}
-.modal{background:var(--white);border-radius:20px;padding:28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
-.modal h2{font-size:18px;font-weight:800;margin-bottom:16px;text-align:center}
-.camera-wrap{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:4/3;margin-bottom:12px}
-#camera-video{width:100%;height:100%;object-fit:cover}
-.camera-guide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.camera-frame{width:80%;height:70%;border:2px solid rgba(255,255,255,.8);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.4)}
-.camera-hint{position:absolute;bottom:12px;left:0;right:0;text-align:center;color:#fff;font-size:13px;font-weight:600;background:rgba(0,0,0,.5);padding:6px;margin:0 12px;border-radius:8px}
-.camera-hint.good{background:rgba(34,197,94,.8)}
-.camera-hint.bad{background:rgba(239,68,68,.8)}
-.camera-actions{display:flex;gap:10px;margin-bottom:16px}
-.ai-analyzing{text-align:center;padding:20px;display:none}
-.ai-spinner{width:50px;height:50px;border:4px solid var(--blue-mid);border-top:4px solid var(--blue);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
-.receipt-form{display:none}
-.receipt-form.show{display:block}
-.manual-tag{background:var(--warn-lt);color:#92400e;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.type-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-.type-btn{padding:8px 14px;border:2px solid var(--border);border-radius:8px;background:var(--white);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--text-lt);transition:all .2s}
-.type-btn.active{border-color:var(--blue);background:var(--blue-lt);color:var(--blue)}
-.tbl{width:100%;border-collapse:collapse;font-size:14px}
-.tbl th{background:var(--bg);padding:10px 14px;text-align:right;font-weight:700;color:var(--text-lt);border-bottom:2px solid var(--border);white-space:nowrap}
-.tbl td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
-.tbl tr:hover td{background:var(--bg)}
-.status{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
-.s-pending{background:var(--warn-lt);color:#92400e}
-.s-ok{background:var(--ok-lt);color:#166534}
-.s-rejected{background:var(--danger-lt);color:#991b1b}
-.budget-bar-wrap{background:var(--bg);border-radius:20px;height:10px;overflow:hidden;margin:8px 0}
-.budget-bar{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--ok),var(--blue))}
-.punch-card{display:flex;flex-direction:column;align-items:center;padding:32px;gap:16px}
-.punch-time{font-size:48px;font-weight:900;letter-spacing:2px}
-.punch-date{font-size:14px;color:var(--text-lt);font-weight:600}
-.punch-status{padding:8px 24px;border-radius:20px;font-weight:700;font-size:15px}
-.punch-in{background:var(--ok-lt);color:#166534}
+.page-title{font-size:20px;font-weight:800;color:var(--text);margin-bottom:16px}
+.card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid var(--border)}
+.card-title{font-size:15px;font-weight:700;margin-bottom:12px;color:var(--text)}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6}
+.stat-row:last-child{border-bottom:none}
+.stat-label{font-size:14px;color:#6b7280}
+.stat-value{font-size:14px;font-weight:700;color:var(--text)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.badge-green{background:#d1fae5;color:#065f46}
+.badge-yellow{background:#fef3c7;color:#92400e}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.expense-item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f9fafb;border-radius:10px;margin-bottom:8px;border:1px solid #e5e7eb}
+.expense-info .title{font-size:14px;font-weight:700}
+.expense-info .sub{font-size:12px;color:#6b7280;margin-top:2px}
+.expense-amount{font-size:16px;font-weight:800;color:var(--text)}
+.traffic{font-size:18px}
+.btn-sm{padding:7px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Heebo',sans-serif;transition:all .2s}
+.btn-approve{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7}
+.btn-reject{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5}
+.btn-scan{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;padding:14px 20px;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;width:100%;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 12px rgba(37,99,235,0.3)}
+.btn-scan:hover{opacity:0.9;transform:translateY(-1px)}
+#camera-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:5000;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+#camera-modal.open{display:flex}
+.camera-box{background:#000;border-radius:16px;overflow:hidden;width:100%;max-width:380px;position:relative}
+#camera-video{width:100%;display:block;max-height:320px;object-fit:cover}
+.camera-overlay{position:absolute;top:0;left:0;right:0;bottom:0;border:3px solid #22c55e;border-radius:16px;pointer-events:none}
+.quality-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#fff;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap}
+.quality-good{color:#22c55e}
+.quality-bad{color:#ef4444}
+.camera-actions{display:flex;gap:10px;margin-top:12px;width:100%;max-width:380px}
+.camera-actions .btn{flex:1;padding:12px}
+.ai-analyzing{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:6000;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+.ai-analyzing.show{display:flex}
+.ai-spinner{width:60px;height:60px;border:5px solid rgba(255,255,255,0.2);border-top-color:#7c3aed;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:16px}
+.ai-text{font-size:18px;font-weight:700}
+.ai-sub{font-size:13px;opacity:0.7;margin-top:6px}
+#expense-form-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:4000;overflow-y:auto;padding:20px}
+#expense-form-modal.open{display:flex;align-items:flex-start;justify-content:center}
+.expense-form-box{background:#fff;border-radius:20px;padding:24px;width:100%;max-width:480px;margin-top:20px}
+.form-row{display:flex;gap:10px}
+.form-row .form-group{flex:1}
+.manual-tag{display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700}
+.progress-bar{background:#e5e7eb;border-radius:10px;height:12px;overflow:hidden;margin:8px 0}
+.progress-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--green),#22c55e);transition:width .5s}
+.progress-fill.warn{background:linear-gradient(90deg,var(--yellow),#f59e0b)}
+.progress-fill.danger{background:linear-gradient(90deg,var(--red),#ef4444)}
+.punch-section{background:#f0fdf4;border-radius:12px;padding:16px;margin-bottom:12px;text-align:center}
+.live-clock{font-size:36px;font-weight:900;color:var(--accent);font-variant-numeric:tabular-nums}
+.punch-status{font-size:13px;color:#6b7280;margin:6px 0 12px}
 .punch-out{background:var(--danger-lt);color:#991b1b}
-.btn-punch{padding:18px 40px;border:none;border-radius:14px;font-family:inherit;font-size:18px;font-weight:800;cursor:pointer;color:#fff}
-.btn-punch-in{background:var(--ok)}.btn-punch-out{background:var(--danger)}
-.km-form{max-width:400px}
-@media(max-width:600px){.form-row{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.punch-time{font-size:36px}}
+.punch-in{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7}
+.punch-out-btn{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5}
+.hours-log{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid #f3f4f6}
+.finance-stream{border-right:4px solid var(--accent);padding-right:12px;margin-bottom:12px}
+.finance-stream.yellow{border-right-color:var(--yellow)}
+.finance-stream.blue{border-right-color:var(--blue)}
+.stream-title{font-size:13px;font-weight:700;color:#6b7280;margin-bottom:4px}
+.stream-amount{font-size:22px;font-weight:900;color:var(--text)}
+.project-card{background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:10px}
+.project-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.project-name{font-size:15px;font-weight:700}
+.user-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px}
+.user-row:last-child{border-bottom:none}
 </style>
 </head>
 <body>
-<div id="loading"><div style="font-size:32px;font-weight:900;color:var(--blue)">PettyCash <span style="color:var(--text)">AI</span></div><div class="spinner"></div><div style="margin-top:12px;font-size:14px;color:#64748B">טוען...</div></div>
-<div id="toast-c"></div>
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo"><h1>PettyCash <span>AI</span></h1><p>מערכת ניהול קופה קטנה חכמה לארגונים</p></div>
-    <div class="fg"><label>אימייל</label><input type="email" id="l-email" placeholder="your@email.com" autocomplete="email"></div>
-    <div class="fg"><label>סיסמה</label><input type="password" id="l-pass" autocomplete="current-password"></div>
-    <button class="btn-login" id="btn-login">כניסה למערכת</button>
-    <div class="login-err" id="l-err"></div>
-    <div class="demo-hint">
-      <div class="demo-hint-hdr" id="demo-hdr">🔑 פרטי כניסה לדמו <span id="demo-arr">▼</span></div>
-      <div class="demo-hint-body" id="demo-body">
-        <div class="dc" onclick="fill('yasminko27@gmail.com','')"><div class="dc-name">יסמין (בעלים)</div><div class="dc-email">yasminko27@gmail.com</div><div class="dc-role badge-admin">אדמין</div></div>
-        <div class="dc" onclick="fill('dana@pettycash.app','Test123456')"><div class="dc-name">דנה שמש</div><div class="dc-email">dana@pettycash.app | Test123456</div><div class="dc-role badge-field">רכזת שטח</div></div>
-        <div class="dc" onclick="fill('michal@pettycash.app','Test123456')"><div class="dc-name">מיכל כהן</div><div class="dc-email">michal@pettycash.app | Test123456</div><div class="dc-role badge-manager">מנהלת</div></div>
-        <div class="dc" onclick="fill('yossi@pettycash.app','Test123456')"><div class="dc-name">יוסי לוי</div><div class="dc-email">yossi@pettycash.app | Test123456</div><div class="dc-role badge-finance">כספים</div></div>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="logo-big">PettyCash <span>AI</span></div>
+  <div style="font-size:13px;color:#6b7280;margin-top:4px">מערכת ניהול קופה קטנה</div>
+  <div class="spinner"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+<!-- LOGIN -->
+<div id="login-screen" style="display:none;min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="name">PettyCash <span>AI</span></div>
+      <div class="sub">מערכת ניהול קופה קטנה לעמותות ועסקים</div>
+    </div>
+    <div class="form-group">
+      <label>אימייל</label>
+      <input type="email" id="login-email" placeholder="your@email.com">
+    </div>
+    <div class="form-group">
+      <label>סיסמה</label>
+      <input type="password" id="login-password" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">כניסה למערכת</button>
+    <div class="demo-cards">
+      <div class="demo-title">כניסה מהירה לדמו</div>
+      <div class="dc" onclick="quickLogin('yasminko27@gmail.com','1234Yasmin!')">
+        <div class="dc-avatar" style="background:#d1fae5;color:#065f46">י</div>
+        <div><div class="dc-name">יסמין (בעלים)</div><div class="dc-role">אדמין | org_001</div></div>
+      </div>
+      <div class="dc" onclick="quickLogin('michal@pettycash.app','Test123456')">
+        <div class="dc-avatar" style="background:#dbeafe;color:#1e40af">מ</div>
+        <div><div class="dc-name">מיכל כהן</div><div class="dc-role">מנהלת פרויקט | org_001</div></div>
+      </div>
+      <div class="dc" onclick="quickLogin('dana@pettycash.app','Test123456')">
+        <div class="dc-avatar" style="background:#fce7f3;color:#9d174d">ד</div>
+        <div><div class="dc-name">דנה שמש</div><div class="dc-role">רכזת שטח | org_001</div></div>
+      </div>
+      <div class="dc" onclick="quickLogin('yossi@pettycash.app','Test123456')">
+        <div class="dc-avatar" style="background:#ede9fe;color:#5b21b6">י</div>
+        <div><div class="dc-name">יוסי לוי</div><div class="dc-role">כספים | org_001</div></div>
       </div>
     </div>
   </div>
 </div>
+<!-- APP -->
 <div id="app">
-  <header class="app-header">
-    <div class="app-logo">PettyCash <span>AI</span></div>
-    <div class="header-right">
-      <div class="user-chip"><div class="role-dot" id="role-dot"></div><strong id="hdr-name"></strong><span style="color:var(--text-lt)">|</span><span id="hdr-role"></span></div>
-      <button class="btn-sm" onclick="doLogout()">יציאה</button>
-    </div>
-  </header>
-  <div class="role-bar" id="role-bar" style="display:none">
-    <label>👁 צפה כ:</label>
-    <button class="rbtn active" onclick="setView('field')">רכזת שטח</button>
-    <button class="rbtn" onclick="setView('manager')">מנהלת</button>
-    <button class="rbtn" onclick="setView('finance')">כספים</button>
-    <button class="rbtn" onclick="setView('admin')">אדמין (שלי)</button>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title">PettyCash <span style="color:#a7f3d0">AI</span></div>
+    <div class="topbar-user" id="topbar-user" onclick="showLogoutMenu()">טוען...</div>
   </div>
-  <nav class="main-nav" id="main-nav"></nav>
-  <div class="app-body" id="app-body"></div>
-</div>
-<div class="modal-ov" id="cam-modal">
-  <div class="modal">
-    <h2>📸 סריקת קבלה</h2>
-    <div class="camera-wrap" id="cam-wrap"><video id="camera-video" autoplay playsinline muted></video><div class="camera-guide"><div class="camera-frame" id="cam-frame"></div></div><div class="camera-hint bad" id="cam-hint">יישר את הקבלה בתוך המסגרת</div></div>
-    <div class="camera-actions">
-      <button class="btn btn-primary" onclick="capturePhoto()" style="flex:1">📷 צלם</button>
-      <label class="btn btn-outline" style="flex:1;justify-content:center;cursor:pointer">📁 העלאה<input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFileUpload(event)"></label>
-      <button class="btn btn-sm" onclick="closeCam()" style="border-color:var(--danger);color:var(--danger)">✕</button>
+
+  <!-- ADMIN VIEW-AS BAR -->
+  <div class="admin-bar" id="admin-bar" style="display:none">
+    <span>תצוגה כ:</span>
+    <button class="view-btn" onclick="setViewAs('admin')" id="vbtn-admin">אדמין</button>
+    <button class="view-btn" onclick="setViewAs('manager')" id="vbtn-manager">מנהלת</button>
+    <button class="view-btn" onclick="setViewAs('field')" id="vbtn-field">עובד</button>
+    <button class="view-btn" onclick="setViewAs('finance')" id="vbtn-finance">כספים</button>
+  </div>
+
+  <!-- NAV TABS -->
+  <div class="nav-tabs" id="nav-tabs"></div>
+
+  <!-- PAGES CONTAINER -->
+  <div id="pages">
+
+    <!-- PAGE: הוצאות (field/all) -->
+    <div class="page" id="page-expenses">
+      <div class="page-title">הוצאות שלי</div>
+      <button class="btn-scan" onclick="openCamera()">
+        <span style="font-size:22px">📷</span>
+        <span>סרוק קבלה</span>
+        <span style="font-size:11px;opacity:0.8;font-weight:400">AI ממלא אוטומטית</span>
+      </button>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="btn-sm btn-approve" style="flex:1" onclick="openManualForm('petty')">+ קופה קטנה</button>
+        <button class="btn-sm" style="flex:1;background:#ede9fe;color:#5b21b6;border:1.5px solid #c4b5fd" onclick="openManualForm('personal')">+ החזר אישי</button>
+        <button class="btn-sm" style="flex:1;background:#fce7f3;color:#9d174d;border:1.5px solid #f9a8d4" onclick="openManualForm('card')">+ כרטיס עמותה</button>
+      </div>
+      <div id="my-expenses-list">
+        <div class="expense-item">
+          <div class="expense-info"><div class="title">סופר יהודה - מזון</div><div class="sub">03/05/2026 | קופה קטנה</div></div>
+          <div style="display:flex;align-items:center;gap:8px"><div class="expense-amount">148 ₪</div><div class="traffic">🟡</div></div>
+        </div>
+        <div class="expense-item">
+          <div class="expense-info"><div class="title">חניון עירוני - חניה</div><div class="sub">01/05/2026 | החזר אישי</div></div>
+          <div style="display:flex;align-items:center;gap:8px"><div class="expense-amount">35 ₪</div><div class="traffic">🟢</div></div>
+        </div>
+        <div class="expense-item">
+          <div class="expense-info"><div class="title">ציוד משרד - כללי</div><div class="sub">28/04/2026 | כרטיס עמותה</div></div>
+          <div style="display:flex;align-items:center;gap:8px"><div class="expense-amount">210 ₪</div><div class="traffic">🔴</div></div>
+        </div>
+      </div>
     </div>
-    <div class="ai-analyzing" id="ai-analyzing"><div class="ai-spinner"></div><div style="font-size:15px;font-weight:700;color:var(--blue)">מנתח קבלה עם AI...</div><div style="font-size:13px;color:var(--text-lt);margin-top:4px">מזהה סכום, תאריך וקטגוריה</div></div>
-    <div class="receipt-form" id="receipt-form">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><div style="font-size:15px;font-weight:700">✅ AI זיהה את הקבלה</div><span id="manual-tag" class="manual-tag" style="display:none">✏️ עודכן ידנית</span></div>
-      <div class="form-row"><div class="fg"><label>סכום (₪)</label><input type="number" id="r-amount" placeholder="0.00" oninput="markManual()"></div><div class="fg"><label>תאריך</label><input type="date" id="r-date" oninput="markManual()"></div></div>
-      <div class="form-row"><div class="fg"><label>שם עסק</label><input type="text" id="r-biz" oninput="markManual()"></div><div class="fg"><label>שעה</label><input type="time" id="r-time" oninput="markManual()"></div></div>
-      <div class="fg"><label>קטגוריה</label><select id="r-cat" onchange="markManual()"><option value="food">🍕 מזון</option><option value="activity">🎯 פעילות</option><option value="parking">🚗 חניה</option><option value="equipment">📦 ציוד</option><option value="other">📋 אחר</option></select></div>
-      <div class="fg"><label>סוג הוצאה</label><div class="type-btns"><button class="type-btn active" id="t-petty" onclick="setType('petty')">💰 קופה קטנה</button><button class="type-btn" id="t-personal" onclick="setType('personal')">👤 החזר אישי</button><button class="type-btn" id="t-card" onclick="setType('card')">💳 כרטיס עמותה</button></div></div>
-      <div class="fg"><label>הערה</label><input type="text" id="r-note" placeholder="הערה למנהלת..."></div>
-      <div style="display:flex;gap:10px;margin-top:16px"><button class="btn btn-primary" onclick="submitReceipt()" style="flex:1">📤 שלח לאישור</button><button class="btn btn-outline" onclick="resetCam()">🔄 סרוק שוב</button></div>
+    <!-- PAGE: ק"מ -->
+    <div class="page" id="page-km">
+      <div class="page-title">דיווח ק"מ יומי</div>
+      <div class="card">
+        <div class="card-title">דיווח נסיעה</div>
+        <div class="form-group">
+          <label>מוצא</label>
+          <input type="text" id="km-from" placeholder="רחוב/עיר מוצא">
+        </div>
+        <div class="form-group">
+          <label>יעד</label>
+          <input type="text" id="km-to" placeholder="יעד הנסיעה">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>ק"מ</label>
+            <input type="number" id="km-amount" placeholder="0" oninput="calcKm()">
+          </div>
+          <div class="form-group">
+            <label>תאריך</label>
+            <input type="date" id="km-date">
+          </div>
+        </div>
+        <div id="km-calc" style="background:#f0fdf4;border-radius:8px;padding:12px;margin:8px 0;display:none">
+          <div style="font-size:13px;color:#6b7280">סכום לפי 2.24 ₪/ק"מ</div>
+          <div id="km-total" style="font-size:24px;font-weight:900;color:var(--accent)"></div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:8px" onclick="submitKm()">שלח דיווח</button>
+      </div>
+      <div class="card">
+        <div class="card-title">נסיעות החודש</div>
+        <div class="stat-row"><span class="stat-label">סה"כ ק"מ</span><span class="stat-value">342 ק"מ</span></div>
+        <div class="stat-row"><span class="stat-label">סכום לתשלום</span><span class="stat-value">766 ₪</span></div>
+        <div class="stat-row"><span class="stat-label">סטטוס</span><span class="badge badge-yellow">🟡 ממתין לאישור</span></div>
+      </div>
+    </div>
+
+    <!-- PAGE: שעות -->
+    <div class="page" id="page-hours">
+      <div class="page-title">שעות עבודה</div>
+      <div class="punch-section">
+        <div class="live-clock" id="live-clock">00:00:00</div>
+        <div class="punch-status" id="punch-status">לא מחובר</div>
+        <div style="display:flex;gap:10px;justify-content:center">
+          <button class="btn-sm punch-in" id="btn-punch-in" onclick="punchIn()">כניסה ✅</button>
+          <button class="btn-sm punch-out-btn" id="btn-punch-out" onclick="punchOut()" style="display:none">יציאה 🚪</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">יומן שעות - מאי 2026</div>
+        <div class="hours-log"><span>ראשון 04/05</span><span>08:30 - 17:00</span><span class="badge badge-green">8.5 ש</span></div>
+        <div class="hours-log"><span>שני 03/05</span><span>08:45 - 16:30</span><span class="badge badge-green">7.75 ש</span></div>
+        <div class="hours-log"><span>שלישי 02/05</span><span>09:00 - 17:15</span><span class="badge badge-green">8.25 ש</span></div>
+        <div class="stat-row" style="margin-top:8px"><span class="stat-label">סה"כ החודש</span><span class="stat-value" style="color:var(--accent)">24.5 שעות</span></div>
+      </div>
+    </div>
+    <!-- PAGE: אישורים (manager) -->
+    <div class="page" id="page-approvals">
+      <div class="page-title">אישורים ממתינים</div>
+      <div class="card">
+        <div class="card-title">הצוות שלי - ממתין לאישור</div>
+        <div class="expense-item">
+          <div class="expense-info"><div class="title">דנה שמש - מזון</div><div class="sub">04/05/2026 | קופה קטנה | ✏️ עודכן ידנית</div></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <div style="display:flex;align-items:center;gap:6px"><div class="expense-amount">148 ₪</div><div class="traffic">🟡</div></div>
+            <div style="display:flex;gap:6px">
+              <button class="btn-sm btn-approve" onclick="approveItem(this,'green')">אשר ✓</button>
+              <button class="btn-sm btn-reject" onclick="approveItem(this,'red')">דחה ✕</button>
+            </div>
+          </div>
+        </div>
+        <div class="expense-item">
+          <div class="expense-info"><div class="title">רות כהן - חניה</div><div class="sub">03/05/2026 | החזר אישי</div></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <div style="display:flex;align-items:center;gap:6px"><div class="expense-amount">55 ₪</div><div class="traffic">🟡</div></div>
+            <div style="display:flex;gap:6px">
+              <button class="btn-sm btn-approve" onclick="approveItem(this,'green')">אשר ✓</button>
+              <button class="btn-sm btn-reject" onclick="approveItem(this,'red')">דחה ✕</button>
+            </div>
+          </div>
+        </div>
+        <div class="expense-item">
+          <div class="expense-info"><div class="title">נועה מזרחי - ציוד</div><div class="sub">02/05/2026 | כרטיס עמותה</div></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <div style="display:flex;align-items:center;gap:6px"><div class="expense-amount">320 ₪</div><div class="traffic">🟡</div></div>
+            <div style="display:flex;gap:6px">
+              <button class="btn-sm btn-approve" onclick="approveItem(this,'green')">אשר ✓</button>
+              <button class="btn-sm btn-reject" onclick="approveItem(this,'red')">דחה ✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: קופה קטנה (manager) -->
+    <div class="page" id="page-petty">
+      <div class="page-title">קופה קטנה - נרקיס</div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:13px;color:#6b7280">יתרה נוכחית</span>
+          <span class="badge badge-yellow">🟡 62%</span>
+        </div>
+        <div style="font-size:32px;font-weight:900;color:var(--accent)" id="petty-balance">1,240 ₪</div>
+        <div style="font-size:13px;color:#6b7280">מתוך 2,000 ₪</div>
+        <div class="progress-bar"><div class="progress-fill warn" id="petty-bar" style="width:62%"></div></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn-sm btn-approve" style="flex:1" onclick="renewFund()">בקש חידוש קופה</button>
+          <button class="btn-sm" style="flex:1;background:#dbeafe;color:#1e40af;border:1.5px solid #93c5fd" onclick="showPettyHistory()">היסטוריה</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">עסקאות אחרונות</div>
+        <div class="stat-row"><span class="stat-label">דנה שמש - מזון</span><span class="stat-value" style="color:var(--red)">-148 ₪</span></div>
+        <div class="stat-row"><span class="stat-label">רות כהן - חניה</span><span class="stat-value" style="color:var(--red)">-55 ₪</span></div>
+        <div class="stat-row"><span class="stat-label">נועה מזרחי - ציוד</span><span class="stat-value" style="color:var(--red)">-320 ₪</span></div>
+        <div class="stat-row"><span class="stat-label">חידוש קופה</span><span class="stat-value" style="color:var(--green)">+2,000 ₪</span></div>
+      </div>
+    </div>
+    <!-- PAGE: כספים (finance) -->
+    <div class="page" id="page-finance">
+      <div class="page-title">סקירת כספים</div>
+      <div class="card">
+        <div class="card-title">3 זרמים - מאי 2026</div>
+        <div class="finance-stream">
+          <div class="stream-title">💰 קופות קטנות (חבילות)</div>
+          <div class="stream-amount">8,750 ₪</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:4px">4 פרויקטים | 3 ממתינות לחידוש</div>
+        </div>
+        <div class="finance-stream yellow">
+          <div class="stream-title">🧾 החזרים אישיים (סוף חודש)</div>
+          <div class="stream-amount">3,280 ₪</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:4px">23 בקשות | אישור עד 31/05</div>
+        </div>
+        <div class="finance-stream blue">
+          <div class="stream-title">🕐 שכר - ק"מ + שעות</div>
+          <div class="stream-amount">12,450 ₪</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:4px">18 עובדים | ייצוא לשכר</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">פרויקטים - יתרות קופה</div>
+        <div class="project-card">
+          <div class="project-header"><span class="project-name">נרקיס</span><span class="badge badge-yellow">🟡 1,240 / 2,000 ₪</span></div>
+          <div style="font-size:12px;color:#6b7280">מנהלת: מיכל כהן | 5 עובדים</div>
+          <div class="progress-bar"><div class="progress-fill warn" style="width:62%"></div></div>
+        </div>
+        <div class="project-card">
+          <div class="project-header"><span class="project-name">שי לחלש</span><span class="badge badge-red">🔴 180 / 1,500 ₪</span></div>
+          <div style="font-size:12px;color:#6b7280">מנהלת: רחל לוי | 3 עובדים</div>
+          <div class="progress-bar"><div class="progress-fill danger" style="width:12%"></div></div>
+        </div>
+        <div class="project-card">
+          <div class="project-header"><span class="project-name">קשרי שכנים</span><span class="badge badge-green">🟢 1,850 / 2,000 ₪</span></div>
+          <div style="font-size:12px;color:#6b7280">מנהלת: שירה ברק | 7 עובדים</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:93%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: אדמין -->
+    <div class="page" id="page-admin">
+      <div class="page-title">ניהול מערכת</div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="card-title" style="margin-bottom:0">פרויקטים</div>
+          <button class="btn-sm btn-approve" onclick="addProject()">+ פרויקט</button>
+        </div>
+        <div class="stat-row"><span class="stat-label">נרקיס</span><span><span class="badge badge-green">פעיל</span></span></div>
+        <div class="stat-row"><span class="stat-label">שי לחלש</span><span><span class="badge badge-green">פעיל</span></span></div>
+        <div class="stat-row"><span class="stat-label">קשרי שכנים</span><span><span class="badge badge-green">פעיל</span></span></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="card-title" style="margin-bottom:0">משתמשים</div>
+          <button class="btn-sm btn-approve" onclick="addUser()">+ משתמש</button>
+        </div>
+        <div class="user-row"><span class="badge badge-blue">אדמין</span><span>יסמין (בעלים)</span><span style="color:#6b7280">yasminko27@gmail.com</span></div>
+        <div class="user-row"><span class="badge badge-green">מנהלת</span><span>מיכל כהן</span><span style="color:#6b7280">michal@pettycash.app</span></div>
+        <div class="user-row"><span class="badge" style="background:#fce7f3;color:#9d174d">רכזת</span><span>דנה שמש</span><span style="color:#6b7280">dana@pettycash.app</span></div>
+        <div class="user-row"><span class="badge badge-yellow">כספים</span><span>יוסי לוי</span><span style="color:#6b7280">yossi@pettycash.app</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">הגדרות OpenAI</div>
+        <div class="form-group">
+          <label>מפתח API (OpenAI) - לסריקה חכמה</label>
+          <input type="password" id="openai-key" placeholder="sk-... (אופציונלי)">
+        </div>
+        <button class="btn btn-secondary" style="width:auto;padding:8px 16px;font-size:13px" onclick="saveApiKey()">שמור מפתח</button>
+      </div>
+    </div>
+
+  </div><!-- /pages -->
+</div><!-- /app -->
+<!-- CAMERA MODAL -->
+<div id="camera-modal">
+  <div class="camera-box">
+    <video id="camera-video" autoplay playsinline></video>
+    <div class="camera-overlay"></div>
+    <div class="quality-hint" id="quality-hint"><span class="quality-good">✓ תמונה טובה - לחץ לצלם</span></div>
+  </div>
+  <div class="camera-actions">
+    <button class="btn btn-primary" id="capture-btn" onclick="capturePhoto()">📸 צלם</button>
+    <button class="btn btn-secondary" onclick="closeCamera()">ביטול</button>
+  </div>
+</div>
+
+<!-- AI ANALYZING -->
+<div class="ai-analyzing" id="ai-analyzing">
+  <div class="ai-spinner"></div>
+  <div class="ai-text">AI מנתח את הקבלה...</div>
+  <div class="ai-sub">מחלץ תאריך, סכום וקטגוריה</div>
+</div>
+
+<!-- EXPENSE FORM MODAL -->
+<div id="expense-form-modal">
+  <div class="expense-form-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="font-size:18px;font-weight:800" id="form-modal-title">הוצאה חדשה</h2>
+      <button onclick="closeExpenseForm()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6b7280">✕</button>
+    </div>
+    <div id="ai-filled-badge" style="display:none;margin-bottom:12px">
+      <span class="badge badge-blue">🤖 מולא על ידי AI - ניתן לערוך</span>
+    </div>
+    <div id="manual-edited-badge" style="display:none;margin-bottom:12px">
+      <span class="manual-tag">✏️ עודכן ידנית</span>
+    </div>
+    <div class="form-group">
+      <label>סוג הוצאה</label>
+      <select id="expense-type">
+        <option value="petty">קופה קטנה</option>
+        <option value="personal">החזר אישי</option>
+        <option value="card">כרטיס עמותה</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>תאריך</label>
+        <input type="date" id="expense-date" oninput="markManual()">
+      </div>
+      <div class="form-group">
+        <label>שעה</label>
+        <input type="time" id="expense-time" oninput="markManual()">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>סכום (₪)</label>
+      <input type="number" id="expense-amount" placeholder="0.00" oninput="markManual()">
+    </div>
+    <div class="form-group">
+      <label>קטגוריה</label>
+      <select id="expense-category" onchange="markManual()">
+        <option value="food">מזון</option>
+        <option value="activity">פעילות</option>
+        <option value="parking">חניה</option>
+        <option value="equipment">ציוד</option>
+        <option value="fuel">דלק</option>
+        <option value="other">אחר</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>הערות</label>
+      <input type="text" id="expense-notes" placeholder="תיאור קצר..." oninput="markManual()">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-primary" style="flex:2" onclick="submitExpense()">שלח לאישור 🟡</button>
+      <button class="btn btn-secondary" style="flex:1" onclick="closeExpenseForm()">ביטול</button>
     </div>
   </div>
 </div>
 <script>
-var SURL='https://soqxqmpoertwxkwhlzen.supabase.co',SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvcXhxbXBvZXJ0d3hrd2hsemVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODc0NzYsImV4cCI6MjA5MzA2MzQ3Nn0.umDsrKOVKyA9tWnwtDHy-TgXl6MFT_JzA_fmNbCXeZI';
-var sb=supabase.createClient(SURL,SKEY);
-var CU=null,CP=null,VR=null,manualEdited=false,expenseType='petty',camStream=null,punchIn=false,qt=null;
-function toast(msg,type,dur){if(!type)type='ok';if(!dur)dur=3500;var c=document.getElementById('toast-c');var t=document.createElement('div');t.className='toast '+type;t.textContent=msg;c.appendChild(t);setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},dur);}
-function rl(r){var m={'field':'רכזת שטח','manager':'מנהלת','finance':'כספים','admin':'אדמין'};return m[r]||r;}
-function rdot(r){var m={'field':'dot-field','manager':'dot-manager','finance':'dot-finance','admin':'dot-admin'};return m[r]||'dot-field';}
-function today(){return new Date().toISOString().split('T')[0];}
-function nowTime(){return new Date().toTimeString().slice(0,5);}
-function fill(e,p){document.getElementById('l-email').value=e;document.getElementById('l-pass').value=p;document.getElementById('l-email').focus();}
-document.getElementById('demo-hdr').onclick=function(){var b=document.getElementById('demo-body'),a=document.getElementById('demo-arr');b.classList.toggle('open');a.textContent=b.classList.contains('open')?'▲':'▼';};
-document.getElementById('l-pass').onkeydown=function(e){if(e.key==='Enter')doLogin();};
-document.getElementById('btn-login').onclick=doLogin;
-async function doLogin(){
-  var email=document.getElementById('l-email').value.trim(),pass=document.getElementById('l-pass').value;
-  var err=document.getElementById('l-err'),btn=document.getElementById('btn-login');
-  err.style.display='none';
-  if(!email||!pass){err.textContent='נא למלא אימייל וסיסמה';err.style.display='block';return;}
-  btn.disabled=true;btn.textContent='מתחבר...';
-  try{
-    var r=await sb.auth.signInWithPassword({email:email,password:pass});
-    if(r.error)throw r.error;
-    var pr=await sb.from('profiles').select('*').eq('id',r.data.user.id).single();
-    if(pr.error||!pr.data)throw new Error('פרופיל לא נמצא');
-    CU=r.data.user;CP=pr.data;VR=pr.data.role;
-    initApp();document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='block';
-    toast('ברוך הבא, '+CP.full_name+' 👋');
-  }catch(e){err.textContent=(e.message==='Invalid login credentials')?'אימייל או סיסמה שגויים':e.message;err.style.display='block';}
-  finally{btn.disabled=false;btn.textContent='כניסה למערכת';}
+const SUPA_URL = "https://soqxqmpoertwxkwhlzen.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvcXhxbXBvZXJ0d3hrd2hsemVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODc0NzYsImV4cCI6MjA5MzA2MzQ3Nn0.umDsrKOVKyA9tWnwtDHy-TgXl6MFT_JzA_fmNbCXeZI";
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let currentUser = null;
+let currentRole = null;
+let currentViewAs = null;
+let aiFilledData = false;
+let punchInTime = null;
+let clockInterval = null;
+
+const TABS = {
+  field:   [{id:"expenses",label:"הוצאות"},{id:"km",label:"ק"מ"},{id:"hours",label:"שעות"}],
+  manager: [{id:"expenses",label:"הוצאות שלי"},{id:"approvals",label:"אישורים"},{id:"petty",label:"קופה קטנה"},{id:"km",label:"ק"מ"},{id:"hours",label:"שעות"}],
+  finance: [{id:"finance",label:"סקירת כספים"},{id:"expenses",label:"הוצאות שלי"},{id:"km",label:"ק"מ"},{id:"hours",label:"שעות"}],
+  admin:   [{id:"admin",label:"ניהול"},{id:"expenses",label:"הוצאות שלי"},{id:"approvals",label:"אישורים"},{id:"petty",label:"קופה קטנה"},{id:"finance",label:"כספים"},{id:"km",label:"ק"מ"},{id:"hours",label:"שעות"}]
+};
+
+function toast(msg, type) {
+  type = type || "info";
+  var el = document.createElement("div");
+  el.className = "toast " + type;
+  el.textContent = msg;
+  document.getElementById("toast-container").appendChild(el);
+  setTimeout(function() { el.remove(); }, 3500);
 }
-async function doLogout(){await sb.auth.signOut();CU=null;CP=null;VR=null;document.getElementById('app').style.display='none';document.getElementById('login-screen').style.display='flex';toast('יצאת מהמערכת','warn');}
-function initApp(){document.getElementById('hdr-name').textContent=CP.full_name;document.getElementById('hdr-role').textContent=rl(CP.role);document.getElementById('role-dot').className='role-dot '+rdot(CP.role);if(CP.role==='admin'){document.getElementById('role-bar').style.display='flex';upRB();}renderNav();renderContent();}
-function upRB(){document.querySelectorAll('.rbtn').forEach(function(b){b.classList.toggle('active',b.getAttribute('onclick').indexOf("'"+VR+"'")>=0);});}
-function setView(r){VR=r;upRB();renderNav();renderContent();toast('מציג: '+rl(r),'warn',2000);}
-function getTabs(){var t=[{id:'expenses',label:'📋 הוצאות',badge:0},{id:'punch',label:'⏰ שעות',badge:0},{id:'km',label:'🚗 ק"מ',badge:0}];if(VR==='manager'||VR==='finance'||VR==='admin')t.push({id:'approve',label:'✅ אישורים',badge:3});if(VR==='finance'||VR==='admin')t.push({id:'finance',label:'💰 כספים',badge:0});if(VR==='admin')t.push({id:'admin',label:'⚙️ ניהול',badge:0});return t;}
-function renderNav(){var tabs=getTabs();document.getElementById('main-nav').innerHTML=tabs.map(function(t,i){return '<button class="ntab'+(i===0?' active':'')+'" data-tab="'+t.id+'" onclick="showTab(\''+t.id+'\')">'+t.label+(t.badge?'<span class="badge">'+t.badge+'</span>':'')+'</button>';}).join('');}
-function showTab(id){document.querySelectorAll('.ntab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===id);});document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('active',p.id==='pg-'+id);});}
-</script>
-<script>
-function renderContent(){var role=VR,h='';
-h+='<div class="page active" id="pg-expenses"><div class="page-title">📋 הוצאות ודיווחים</div>';
-h+='<button class="scan-btn" onclick="openCam()"><span>📷 סרוק קבלה חדשה</span><span style="font-size:13px;opacity:.8;font-weight:400">AI ממלא אוטומטית</span></button>';
-h+='<div class="stats"><div class="stat"><div class="num">12</div><div class="lbl">דיווחים החודש</div></div><div class="stat"><div class="num" style="color:var(--warn)">3</div><div class="lbl">ממתינים</div></div><div class="stat"><div class="num" style="color:var(--ok)">8</div><div class="lbl">אושרו</div></div><div class="stat"><div class="num">₪2,340</div><div class="lbl">סה"כ הגשתי</div></div></div>';
-h+='<div class="card"><div class="card-title">הדיווחים שלי</div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>תאריך</th><th>עסק</th><th>קטגוריה</th><th>סכום</th><th>סוג</th><th>סטטוס</th></tr></thead><tbody>';
-h+='<tr><td>01/05</td><td>רמי לוי</td><td>מזון</td><td>₪150</td><td>קופה קטנה</td><td><span class="status s-ok">🟢 אושר</span></td></tr>';
-h+='<tr><td>03/05</td><td>מנגלייה</td><td>פעילות</td><td>₪320</td><td>קופה קטנה</td><td><span class="status s-pending">🟡 ממתין</span></td></tr>';
-h+='<tr><td>05/05</td><td>Office Depot</td><td>ציוד</td><td>₪180</td><td>קופה קטנה</td><td><span class="status s-rejected">🔴 נדחה</span></td></tr>';
-h+='</tbody></table></div></div></div>';
-h+='<div class="page" id="pg-punch"><div class="page-title">⏰ שעות עבודה</div><div class="card"><div class="punch-card"><div class="punch-time" id="punch-clock">--:--:--</div><div class="punch-date" id="punch-date"></div><div class="punch-status punch-out" id="punch-status">לא מחויב</div><button class="btn-punch btn-punch-in" id="btn-punch" onclick="togglePunch()">🟢 כניסה לעבודה</button></div></div><div class="card"><div class="card-title">יומן השבוע</div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>יום</th><th>כניסה</th><th>יציאה</th><th>שעות</th><th>סטטוס</th></tr></thead><tbody><tr><td>ראשון 03/05</td><td>08:30</td><td>16:30</td><td>8:00</td><td><span class="status s-ok">🟢 אושר</span></td></tr><tr><td>שני 04/05</td><td>08:45</td><td>17:00</td><td>8:15</td><td><span class="status s-ok">🟢 אושר</span></td></tr></tbody></table></div></div></div>';
-h+='<div class="page" id="pg-km"><div class="page-title">🚗 דיווח ק"מ</div><div class="card"><div class="card-title">דיווח ק"מ יומי</div><div class="km-form"><div class="fg"><label>תאריך</label><input type="date" id="km-date" value="'+today()+'"></div><div class="fg"><label>מוצא</label><input type="text" id="km-from" placeholder="מ..."></div><div class="fg"><label>יעד</label><input type="text" id="km-to" placeholder="אל..."></div><div class="fg"><label>ק"מ</label><input type="number" id="km-dist" min="0" oninput="calcKM()"></div><div class="fg"><label>מחיר לק"מ</label><input type="number" id="km-price" value="1.50" readonly style="background:var(--bg)"></div><div class="fg"><label>לקבל</label><input type="text" id="km-total" readonly style="background:var(--bg);font-weight:700;color:var(--blue)"></div><button class="btn btn-primary" onclick="submitKM()">📤 שלח</button></div></div></div>';
-if(role==='manager'||role==='finance'||role==='admin'){
-h+='<div class="page" id="pg-approve"><div class="page-title">✅ אישור דיווחים</div><div class="stats"><div class="stat"><div class="num" style="color:var(--warn)">3</div><div class="lbl">ממתינים</div></div><div class="stat"><div class="num" style="color:var(--ok)">18</div><div class="lbl">אושרו</div></div></div>';
-h+='<div class="card"><div class="card-title">ממתינים לאישור</div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>עובד</th><th>עסק</th><th>סכום</th><th>הערות</th><th>פעולה</th></tr></thead><tbody>';
-h+='<tr><td>דנה שמש</td><td>מנגלייה</td><td>₪320</td><td>-</td><td><button class="btn btn-ok" style="padding:5px 10px;font-size:12px" onclick="approve(this)">✅ אשר</button> <button class="btn btn-danger" style="padding:5px 10px;font-size:12px" onclick="reject(this)">❌ דחה</button></td></tr>';
-h+='<tr><td>דנה שמש</td><td>פז חניה</td><td>₪25</td><td><span class="manual-tag">✏️ ידנית</span></td><td><button class="btn btn-ok" style="padding:5px 10px;font-size:12px" onclick="approve(this)">✅ אשר</button> <button class="btn btn-danger" style="padding:5px 10px;font-size:12px" onclick="reject(this)">❌ דחה</button></td></tr>';
-h+='</tbody></table></div></div>';
-if(role==='manager'){h+='<div class="card"><div class="card-title">💰 קופה קטנה</div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div><div style="font-size:28px;font-weight:900;color:var(--blue)">₪1,530</div><div style="font-size:13px;color:var(--text-lt)">יתרה מתוך ₪2,000</div></div><button class="btn btn-outline" onclick="toast('בקשה נשלחה!','ok')">בקש חידוש</button></div><div class="budget-bar-wrap"><div class="budget-bar" style="width:76.5%"></div></div></div>';}
-h+='</div>';
+
+function showPage(id) {
+  document.querySelectorAll(".page").forEach(function(p){ p.classList.remove("active"); });
+  document.querySelectorAll(".nav-tab").forEach(function(t){ t.classList.remove("active"); });
+  var pg = document.getElementById("page-" + id);
+  if(pg) pg.classList.add("active");
+  var tb = document.querySelector(".nav-tab[data-page=" + id + "]");
+  if(tb) tb.classList.add("active");
 }
-if(role==='finance'||role==='admin'){
-h+='<div class="page" id="pg-finance"><div class="page-title">💰 ניהול כספים</div><div class="stats"><div class="stat"><div class="num">₪8,200</div><div class="lbl">קופות קטנות</div></div><div class="stat"><div class="num">₪3,400</div><div class="lbl">החזרים</div></div><div class="stat"><div class="num">₪1,890</div><div class="lbl">ק"מ לשכר</div></div><div class="stat"><div class="num">5</div><div class="lbl">פרויקטים</div></div></div><div class="card"><div class="card-title">קופות קטנות לפי פרויקט</div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>פרויקט</th><th>מנהלת</th><th>יתרה</th><th>סטטוס</th></tr></thead><tbody><tr><td>נרקיס</td><td>מיכל כהן</td><td>₪1,530</td><td><span class="status s-ok">🟢 תקין</span></td></tr><tr><td>שי</td><td>הילה רז</td><td>₪150</td><td><span class="status s-pending">🟡 נמוך</span></td></tr></tbody></table></div></div></div>';
+
+function buildNav(role) {
+  var tabs = TABS[role] || TABS.field;
+  var nav = document.getElementById("nav-tabs");
+  nav.innerHTML = "";
+  tabs.forEach(function(t){
+    var btn = document.createElement("div");
+    btn.className = "nav-tab";
+    btn.setAttribute("data-page", t.id);
+    btn.textContent = t.label;
+    btn.onclick = function(){ showPage(t.id); };
+    nav.appendChild(btn);
+  });
+  if(tabs.length > 0) showPage(tabs[0].id);
 }
-if(role==='admin'){
-h+='<div class="page" id="pg-admin"><div class="page-title">⚙️ ניהול מערכת</div><div class="card"><div class="card-title">פרויקטים פעילים</div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>פרויקט</th><th>מנהלת</th><th>עובדים</th><th>קופה</th></tr></thead><tbody><tr><td>נרקיס</td><td>מיכל כהן</td><td>4</td><td>₪1,530/₪2,000</td></tr><tr><td>שי</td><td>הילה רז</td><td>3</td><td>₪150/₪2,000</td></tr></tbody></table><button class="btn btn-primary" style="margin-top:12px" onclick="toast('בקרוב!','warn')">פרויקט חדש</button></div><div class="card"><div class="card-title">עובדים</div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>שם</th><th>תפקיד</th><th>פרויקט</th></tr></thead><tbody><tr><td>יסמין</td><td><span class="dc-role badge-admin">אדמין</span></td><td>-</td></tr><tr><td>דנה שמש</td><td><span class="dc-role badge-field">רכזת שטח</span></td><td>נרקיס</td></tr><tr><td>מיכל כהן</td><td><span class="dc-role badge-manager">מנהלת</span></td><td>נרקיס</td></tr><tr><td>יוסי לוי</td><td><span class="dc-role badge-finance">כספים</span></td><td>-</td></tr></tbody></table></div><div class="card"><div class="fg" style="max-width:280px"><label>OpenAI API Key</label><input type="password" id="ai-key" placeholder="sk-..." onchange="localStorage.setItem('oai_key',this.value)"></div></div></div></div>';
+
+async function init() {
+  var sData = await sb.auth.getSession();
+  var session = sData.data.session;
+  if(session) {
+    var uData = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+    if(uData.data) {
+      currentUser = uData.data;
+      currentRole = currentUser.role;
+      showApp();
+    } else {
+      showLogin();
+    }
+  } else {
+    showLogin();
+  }
 }
-document.getElementById('app-body').innerHTML=h;
-startClock();
+
+function showLogin() {
+  document.getElementById("loading").style.display = "none";
+  var ls = document.getElementById("login-screen");
+  ls.style.display = "flex";
 }
-function startClock(){var el=document.getElementById('punch-clock'),de=document.getElementById('punch-date');if(!el)return;function u(){var n=new Date();if(el)el.textContent=n.toLocaleTimeString('he-IL');if(de)de.textContent=n.toLocaleDateString('he-IL',{weekday:'long',year:'numeric',month:'long',day:'numeric'});}u();setInterval(u,1000);}
-function togglePunch(){punchIn=!punchIn;var btn=document.getElementById('btn-punch'),st=document.getElementById('punch-status');if(punchIn){btn.className='btn-punch btn-punch-out';btn.textContent='🔴 יציאה מעבודה';st.className='punch-status punch-in';st.textContent='בעבודה מ-'+nowTime();toast('✅ כניסה נרשמה: '+nowTime());}else{btn.className='btn-punch btn-punch-in';btn.textContent='🟢 כניסה לעבודה';st.className='punch-status punch-out';st.textContent='לא מחויב';toast('👋 יציאה נרשמה!','warn');}}
-function calcKM(){var d=parseFloat(document.getElementById('km-dist').value||0),p=parseFloat(document.getElementById('km-price').value||1.5),t=document.getElementById('km-total');if(t)t.value='₪'+(d*p).toFixed(2);}
-function submitKM(){var f=document.getElementById('km-from').value,t=document.getElementById('km-to').value,d=document.getElementById('km-dist').value;if(!f||!t||!d){toast('נא למלא את כל השדות','err');return;}toast('✅ דיווח נשלח! '+d+' קמ','ok');document.getElementById('km-from').value='';document.getElementById('km-to').value='';document.getElementById('km-dist').value='';document.getElementById('km-total').value='';}
-function approve(btn){var row=btn.closest('tr');row.querySelector('td:last-child').innerHTML='<span class="status s-ok">🟢 אושר</span>';toast('✅ אושר!','ok');}
-function reject(btn){var row=btn.closest('tr');row.querySelector('td:last-child').innerHTML='<span class="status s-rejected">🔴 נדחה</span>';toast('❌ נדחה','err');}
-function openCam(){document.getElementById('cam-modal').classList.add('open');resetCam();startCamera();}
-function closeCam(){stopCamera();document.getElementById('cam-modal').classList.remove('open');}
-function resetCam(){document.getElementById('ai-analyzing').style.display='none';document.getElementById('receipt-form').classList.remove('show');document.getElementById('cam-wrap').style.display='block';document.querySelector('.camera-actions').style.display='flex';manualEdited=false;document.getElementById('manual-tag').style.display='none';}
-async function startCamera(){try{var s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});camStream=s;document.getElementById('camera-video').srcObject=s;simQ();}catch(e){toast('אין גישה למצלמה. השתמש בהעלאת תמונה','warn');document.getElementById('cam-wrap').style.display='none';}}
-function stopCamera(){if(camStream){camStream.getTracks().forEach(function(t){t.stop();});camStream=null;}}
-function simQ(){var hints=['יישר את הקבלה בתוך המסגרת','קרב קצת יותר לקבלה','הצילום מטושטש - החזק בעדינות','מצוין! לחץ לצילום 📷'],i=0;qt=setInterval(function(){var h=document.getElementById('cam-hint'),f=document.getElementById('cam-frame');if(!h){clearInterval(qt);return;}var g=i%hints.length===3;h.textContent=hints[i%hints.length];h.className='camera-hint '+(g?'good':'bad');f.style.borderColor=g?'rgba(34,197,94,.9)':'rgba(239,68,68,.7)';i++;if(i>=hints.length)clearInterval(qt);},1200);}
-function capturePhoto(){if(qt)clearInterval(qt);stopCamera();analyzeReceipt();}
-function handleFileUpload(e){var f=e.target.files[0];if(!f)return;stopCamera();analyzeReceipt();}
-function analyzeReceipt(){document.getElementById('cam-wrap').style.display='none';document.querySelector('.camera-actions').style.display='none';document.getElementById('ai-analyzing').style.display='block';setTimeout(function(){document.getElementById('ai-analyzing').style.display='none';fillAI();document.getElementById('receipt-form').classList.add('show');},2200);}
-function fillAI(){var s=[{a:'89.90',b:'סופר-פארם',c:'equipment'},{a:'145.00',b:"McDonald's",c:'food'},{a:'32.00',b:'פז',c:'parking'},{a:'67.50',b:'קפה גרג',c:'food'},{a:'280.00',b:'Office Depot',c:'equipment'}];var r=s[Math.floor(Math.random()*s.length)];document.getElementById('r-amount').value=r.a;document.getElementById('r-date').value=today();document.getElementById('r-time').value=nowTime();document.getElementById('r-biz').value=r.b;document.getElementById('r-cat').value=r.c;manualEdited=false;document.getElementById('manual-tag').style.display='none';}
-function markManual(){if(!manualEdited){manualEdited=true;document.getElementById('manual-tag').style.display='inline-block';}}
-function setType(type){expenseType=type;['petty','personal','card'].forEach(function(t){var el=document.getElementById('t-'+t);if(el)el.classList.toggle('active',t===type);});}
-function submitReceipt(){var a=document.getElementById('r-amount').value,b=document.getElementById('r-biz').value;if(!a||!b){toast('נא למלא סכום ושם עסק','err');return;}var tl={petty:'קופה קטנה',personal:'החזר אישי',card:'כרטיס עמותה'};toast('✅ נשלח! ₪'+a+' - '+b+' ('+tl[expenseType]+')','ok');closeCam();}
-async function init(){document.getElementById('loading').style.display='flex';try{var r=await sb.auth.getSession();if(r.data.session){var pr=await sb.from('profiles').select('*').eq('id',r.data.session.user.id).single();if(pr.data){CU=r.data.session.user;CP=pr.data;VR=pr.data.role;initApp();document.getElementById('app').style.display='block';}else{document.getElementById('login-screen').style.display='flex';}}else{document.getElementById('login-screen').style.display='flex';}}catch(e){document.getElementById('login-screen').style.display='flex';}finally{document.getElementById('loading').style.display='none';}}
+
+function showApp() {
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("login-screen").style.display = "none";
+  var app = document.getElementById("app");
+  app.style.display = "flex";
+  var viewRole = currentViewAs || currentRole;
+  document.getElementById("topbar-user").textContent = (currentUser.full_name || "משתמש") + " (" + viewRole + ")";
+  if(currentRole === "admin") {
+    document.getElementById("admin-bar").style.display = "flex";
+    setViewAs(currentViewAs || "admin");
+  } else {
+    buildNav(viewRole);
+  }
+  startClock();
+  toast("שלום " + (currentUser.full_name || "משתמש") + "! ברוך הבא", "ok");
+}
+
+function setViewAs(role) {
+  currentViewAs = role;
+  document.querySelectorAll(".view-btn").forEach(function(b){ b.classList.remove("active"); });
+  var vb = document.getElementById("vbtn-" + role);
+  if(vb) vb.classList.add("active");
+  buildNav(role);
+  document.getElementById("topbar-user").textContent = (currentUser.full_name || "משתמש") + " (תצוגה: " + role + ")";
+}
+
+async function doLogin() {
+  var email = document.getElementById("login-email").value.trim();
+  var password = document.getElementById("login-password").value;
+  if(!email || !password) { toast("מלא אימייל וסיסמה", "err"); return; }
+  var res = await sb.auth.signInWithPassword({email: email, password: password});
+  if(res.error) { toast("שגיאת כניסה: " + res.error.message, "err"); return; }
+  var uData = await sb.from("profiles").select("*").eq("id", res.data.user.id).single();
+  if(uData.data) { currentUser = uData.data; currentRole = currentUser.role; showApp(); }
+  else { toast("לא נמצא פרופיל למשתמש", "err"); }
+}
+
+async function quickLogin(email, pass) {
+  document.getElementById("login-email").value = email;
+  document.getElementById("login-password").value = pass;
+  await doLogin();
+}
+
+function showLogoutMenu() {
+  if(confirm("להתנתק?")) {
+    sb.auth.signOut();
+    currentUser = null; currentRole = null; currentViewAs = null;
+    document.getElementById("app").style.display = "none";
+    showLogin();
+    toast("התנתקת בהצלחה", "info");
+  }
+}
+function openCamera() {
+  var modal = document.getElementById("camera-modal");
+  modal.classList.add("open");
+  navigator.mediaDevices.getUserMedia({video: {facingMode: "environment", width:{ideal:1280}, height:{ideal:720}}})
+    .then(function(stream){ document.getElementById("camera-video").srcObject = stream; })
+    .catch(function(){ toast("לא ניתן לגשת למצלמה", "err"); modal.classList.remove("open"); });
+  simulateQualityCheck();
+}
+
+function simulateQualityCheck() {
+  var hints = ["✓ תמונה טובה - לחץ לצלם", "⚠ יישר את הכרטיס", "⚠ הצילום מטושטש - התקרב", "✓ מצוין!"];
+  var hintEl = document.getElementById("quality-hint");
+  var i = 0;
+  var interval = setInterval(function(){
+    if(!document.getElementById("camera-modal").classList.contains("open")){ clearInterval(interval); return; }
+    var h = hints[i % hints.length];
+    var isGood = h.indexOf("✓") >= 0;
+    hintEl.innerHTML = "<span class=\"" + (isGood ? "quality-good" : "quality-bad") + "\">" + h + "</span>";
+    i++;
+  }, 1800);
+}
+
+function closeCamera() {
+  var vid = document.getElementById("camera-video");
+  if(vid.srcObject) { vid.srcObject.getTracks().forEach(function(t){t.stop();}); vid.srcObject = null; }
+  document.getElementById("camera-modal").classList.remove("open");
+}
+
+function capturePhoto() {
+  closeCamera();
+  document.getElementById("ai-analyzing").classList.add("show");
+  setTimeout(function(){
+    document.getElementById("ai-analyzing").classList.remove("show");
+    fillAiData();
+    openExpenseForm();
+  }, 2200);
+}
+
+var AI_SAMPLES = [
+  {date:"2026-05-05", time:"10:30", amount:"148", category:"food", notes:"סופר יהודה - מצרכים"},
+  {date:"2026-05-05", time:"14:15", amount:"35", category:"parking", notes:"חניון עירוני"},
+  {date:"2026-05-04", time:"09:00", amount:"210", category:"equipment", notes:"ציוד משרדי - Office Depot"},
+  {date:"2026-05-03", time:"16:45", amount:"89", category:"fuel", notes:"פז - דלק"}
+];
+
+function fillAiData() {
+  var sample = AI_SAMPLES[Math.floor(Math.random() * AI_SAMPLES.length)];
+  document.getElementById("expense-date").value = sample.date;
+  document.getElementById("expense-time").value = sample.time;
+  document.getElementById("expense-amount").value = sample.amount;
+  document.getElementById("expense-category").value = sample.category;
+  document.getElementById("expense-notes").value = sample.notes;
+  document.getElementById("expense-type").value = "petty";
+  aiFilledData = true;
+  document.getElementById("ai-filled-badge").style.display = "block";
+  document.getElementById("manual-edited-badge").style.display = "none";
+}
+
+function openManualForm(type) {
+  aiFilledData = false;
+  document.getElementById("ai-filled-badge").style.display = "none";
+  document.getElementById("manual-edited-badge").style.display = "none";
+  var today = new Date().toISOString().split("T")[0];
+  document.getElementById("expense-date").value = today;
+  document.getElementById("expense-time").value = new Date().toTimeString().slice(0,5);
+  document.getElementById("expense-amount").value = "";
+  document.getElementById("expense-category").value = "food";
+  document.getElementById("expense-notes").value = "";
+  document.getElementById("expense-type").value = type || "petty";
+  openExpenseForm();
+}
+
+function openExpenseForm() {
+  document.getElementById("expense-form-modal").classList.add("open");
+}
+
+function closeExpenseForm() {
+  document.getElementById("expense-form-modal").classList.remove("open");
+  aiFilledData = false;
+}
+
+function markManual() {
+  if(aiFilledData) {
+    document.getElementById("manual-edited-badge").style.display = "block";
+  }
+}
+
+function submitExpense() {
+  var amount = document.getElementById("expense-amount").value;
+  var type = document.getElementById("expense-type").value;
+  var cat = document.getElementById("expense-category");
+  var catText = cat.options[cat.selectedIndex].text;
+  if(!amount) { toast("יש להזין סכום", "err"); return; }
+  var typeLabels = {petty:"קופה קטנה", personal:"החזר אישי", card:"כרטיס עמותה"};
+  var newItem = document.createElement("div");
+  newItem.className = "expense-item";
+  var wasEdited = document.getElementById("manual-edited-badge").style.display !== "none";
+  var editTag = wasEdited ? " | ✏️ עודכן ידנית" : "";
+  newItem.innerHTML = "<div class=\"expense-info\"><div class=\"title\">" + catText + " - " + (typeLabels[type]||type) + editTag + "</div><div class=\"sub\">" + document.getElementById("expense-date").value + "</div></div><div style=\"display:flex;align-items:center;gap:8px\"><div class=\"expense-amount\">" + amount + " ₪</div><div class=\"traffic\">🟡</div></div>";
+  var list = document.getElementById("my-expenses-list");
+  list.insertBefore(newItem, list.firstChild);
+  closeExpenseForm();
+  toast("ההוצאה נשלחה לאישור 🟡", "ok");
+}
+function calcKm() {
+  var km = parseFloat(document.getElementById("km-amount").value) || 0;
+  var total = (km * 2.24).toFixed(2);
+  var calcDiv = document.getElementById("km-calc");
+  var totalEl = document.getElementById("km-total");
+  if(km > 0) {
+    calcDiv.style.display = "block";
+    totalEl.textContent = total + " ₪";
+  } else {
+    calcDiv.style.display = "none";
+  }
+}
+
+function submitKm() {
+  var from = document.getElementById("km-from").value;
+  var to = document.getElementById("km-to").value;
+  var km = document.getElementById("km-amount").value;
+  if(!from || !to || !km) { toast("מלא את כל שדות הנסיעה", "err"); return; }
+  toast("דיווח ק"מ נשלח! " + km + " ק"מ = " + (km*2.24).toFixed(2) + " ₪", "ok");
+  document.getElementById("km-from").value = "";
+  document.getElementById("km-to").value = "";
+  document.getElementById("km-amount").value = "";
+  document.getElementById("km-calc").style.display = "none";
+}
+
+function startClock() {
+  if(clockInterval) clearInterval(clockInterval);
+  clockInterval = setInterval(function(){
+    var el = document.getElementById("live-clock");
+    if(el) el.textContent = new Date().toTimeString().slice(0,8);
+  }, 1000);
+  var el = document.getElementById("live-clock");
+  if(el) el.textContent = new Date().toTimeString().slice(0,8);
+}
+
+function punchIn() {
+  punchInTime = new Date();
+  var h = punchInTime.toTimeString().slice(0,5);
+  document.getElementById("punch-status").textContent = "מחובר מ-" + h;
+  document.getElementById("btn-punch-in").style.display = "none";
+  document.getElementById("btn-punch-out").style.display = "inline-block";
+  toast("כניסה נרשמה: " + h, "ok");
+}
+
+function punchOut() {
+  if(!punchInTime) return;
+  var now = new Date();
+  var diff = Math.round((now - punchInTime) / 60000);
+  var h = Math.floor(diff/60);
+  var m = diff % 60;
+  var outTime = now.toTimeString().slice(0,5);
+  document.getElementById("punch-status").textContent = "לא מחובר";
+  document.getElementById("btn-punch-in").style.display = "inline-block";
+  document.getElementById("btn-punch-out").style.display = "none";
+  toast("יציאה: " + outTime + " | " + h + " ש' " + m + " ד'", "ok");
+  punchInTime = null;
+}
+
+function approveItem(btn, status) {
+  var item = btn.closest(".expense-item");
+  var trafficEl = item.querySelector(".traffic");
+  if(status === "green") {
+    trafficEl.textContent = "🟢";
+    toast("הוצאה אושרה ✓", "ok");
+  } else {
+    trafficEl.textContent = "🔴";
+    toast("הוצאה נדחתה", "err");
+  }
+  var btns = item.querySelectorAll(".btn-sm");
+  btns.forEach(function(b){ b.style.display = "none"; });
+}
+
+function renewFund() {
+  toast("בקשת חידוש קופה נשלחה לכספים!", "ok");
+}
+
+function showPettyHistory() {
+  toast("היסטוריית קופה - בפיתוח", "info");
+}
+
+function addProject() {
+  var name = prompt("שם פרויקט חדש:");
+  if(name) toast("פרויקט \"" + name + "\" נוצר!", "ok");
+}
+
+function addUser() {
+  toast("הוספת משתמש - בפיתוח", "info");
+}
+
+function saveApiKey() {
+  var key = document.getElementById("openai-key").value;
+  if(key) { localStorage.setItem("openai_key", key); toast("מפתח API נשמר!", "ok"); }
+  else { toast("הזן מפתח תחילה", "err"); }
+}
+
 init();
 </script>
 </body>
