@@ -222,9 +222,9 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
         </div>
       </div>
     </div>
-    <!-- PAGE: ק"מ -->
+    <!-- PAGE: ק״מ -->
     <div class="page" id="page-km">
-      <div class="page-title">דיווח ק"מ יומי</div>
+      <div class="page-title">דיווח ק״מ יומי</div>
       <div class="card">
         <div class="card-title">דיווח נסיעה</div>
         <div class="form-group">
@@ -237,7 +237,7 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>ק"מ</label>
+            <label>ק״מ</label>
             <input type="number" id="km-amount" placeholder="0" oninput="calcKm()">
           </div>
           <div class="form-group">
@@ -246,14 +246,14 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
           </div>
         </div>
         <div id="km-calc" style="background:#f0fdf4;border-radius:8px;padding:12px;margin:8px 0;display:none">
-          <div style="font-size:13px;color:#6b7280">סכום לפי 2.24 ₪/ק"מ</div>
+          <div style="font-size:13px;color:#6b7280">סכום לפי 2.24 ₪/ק״מ</div>
           <div id="km-total" style="font-size:24px;font-weight:900;color:var(--accent)"></div>
         </div>
         <button class="btn btn-primary" style="margin-top:8px" onclick="submitKm()">שלח דיווח</button>
       </div>
       <div class="card">
         <div class="card-title">נסיעות החודש</div>
-        <div class="stat-row"><span class="stat-label">סה"כ ק"מ</span><span class="stat-value">342 ק"מ</span></div>
+        <div class="stat-row"><span class="stat-label">סה"כ ק״מ</span><span class="stat-value">342 ק״מ</span></div>
         <div class="stat-row"><span class="stat-label">סכום לתשלום</span><span class="stat-value">766 ₪</span></div>
         <div class="stat-row"><span class="stat-label">סטטוס</span><span class="badge badge-yellow">🟡 ממתין לאישור</span></div>
       </div>
@@ -356,7 +356,7 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
           <div style="font-size:12px;color:#6b7280;margin-top:4px">23 בקשות | אישור עד 31/05</div>
         </div>
         <div class="finance-stream blue">
-          <div class="stream-title">🕐 שכר - ק"מ + שעות</div>
+          <div class="stream-title">🕐 שכר - ק״מ + שעות</div>
           <div class="stream-amount">12,450 ₪</div>
           <div style="font-size:12px;color:#6b7280;margin-top:4px">18 עובדים | ייצוא לשכר</div>
         </div>
@@ -504,10 +504,10 @@ let punchInTime = null;
 let clockInterval = null;
 
 const TABS = {
-  field:   [{id:"expenses",label:"הוצאות"},{id:"km",label:"ק"מ"},{id:"hours",label:"שעות"}],
-  manager: [{id:"expenses",label:"הוצאות שלי"},{id:"approvals",label:"אישורים"},{id:"petty",label:"קופה קטנה"},{id:"km",label:"ק"מ"},{id:"hours",label:"שעות"}],
-  finance: [{id:"finance",label:"סקירת כספים"},{id:"expenses",label:"הוצאות שלי"},{id:"km",label:"ק"מ"},{id:"hours",label:"שעות"}],
-  admin:   [{id:"admin",label:"ניהול"},{id:"expenses",label:"הוצאות שלי"},{id:"approvals",label:"אישורים"},{id:"petty",label:"קופה קטנה"},{id:"finance",label:"כספים"},{id:"km",label:"ק"מ"},{id:"hours",label:"שעות"}]
+  field:   [{id:"expenses",label:"הוצאות"},{id:"km",label:"ק״מ"},{id:"hours",label:"שעות"}],
+  manager: [{id:"expenses",label:"הוצאות שלי"},{id:"approvals",label:"אישורים"},{id:"petty",label:"קופה קטנה"},{id:"km",label:"ק״מ"},{id:"hours",label:"שעות"}],
+  finance: [{id:"finance",label:"סקירת כספים"},{id:"expenses",label:"הוצאות שלי"},{id:"km",label:"ק״מ"},{id:"hours",label:"שעות"}],
+  admin:   [{id:"admin",label:"ניהול"},{id:"expenses",label:"הוצאות שלי"},{id:"approvals",label:"אישורים"},{id:"petty",label:"קופה קטנה"},{id:"finance",label:"כספים"},{id:"km",label:"ק״מ"},{id:"hours",label:"שעות"}]
 };
 
 function toast(msg, type) {
@@ -740,7 +740,7 @@ function submitKm() {
   var to = document.getElementById("km-to").value;
   var km = document.getElementById("km-amount").value;
   if(!from || !to || !km) { toast("מלא את כל שדות הנסיעה", "err"); return; }
-  toast("דיווח ק"מ נשלח! " + km + " ק"מ = " + (km*2.24).toFixed(2) + " ₪", "ok");
+  toast("דיווח ק״מ נשלח! " + km + " ק״מ = " + (km*2.24).toFixed(2) + " ₪", "ok");
   document.getElementById("km-from").value = "";
   document.getElementById("km-to").value = "";
   document.getElementById("km-amount").value = "";
