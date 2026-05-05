@@ -825,7 +825,7 @@ function doLogin(){
     return;
   }
   S.username='יסמין'; S.role='coordinator'; S.loggedIn=true;
-  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-login').classList.remove('active');document.getElementById('screen-login').style.display='none';
   document.getElementById('screen-app').classList.add('active');
   document.getElementById('tbr').style.display='flex';
   document.getElementById('tbname').textContent='יסמין';
