@@ -1,689 +1,257 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PettyCash AI - ניהול קופה קטנה</title>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-:root{--bg:#F0F4F8;--white:#fff;--blue:#3B82F6;--blue-dk:#1D4ED8;--blue-lt:#EFF6FF;--blue-mid:#BFDBFE;--teal:#0D9488;--text:#1E293B;--text-lt:#64748B;--border:#E2E8F0;--danger:#EF4444;--danger-lt:#FEF2F2;--ok:#22C55E;--ok-lt:#F0FDF4;--warn:#F59E0B;--warn-lt:#FFFBEB;--shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);--radius:12px}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Heebo",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
-/* Loading */
-#loading{position:fixed;inset:0;background:linear-gradient(135deg,#EFF6FF,#F0FDF4);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
-.spinner{width:40px;height:40px;border:3px solid var(--border);border-top:3px solid var(--blue);border-radius:50%;animation:spin 1s linear infinite;margin-top:16px}
-@keyframes spin{to{transform:rotate(360deg)}}
-/* Toast */
-#toast-c{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:8px;min-width:300px}
-.toast{padding:12px 20px;border-radius:10px;font-weight:600;font-size:14px;box-shadow:var(--shadow);animation:slideIn .3s ease;text-align:center}
-.toast.ok{background:var(--ok-lt);color:#166534;border:1px solid #bbf7d0}
-.toast.err{background:var(--danger-lt);color:#991b1b;border:1px solid #fecaca}
-.toast.warn{background:var(--warn-lt);color:#92400e;border:1px solid #fde68a}
-@keyframes slideIn{from{transform:translateX(60px);opacity:0}to{transform:translateX(0);opacity:1}}
-/* Login */
-#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;display:none}
-.login-card{background:var(--white);border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 10px 40px rgba(0,0,0,.12)}
-.login-logo{text-align:center;margin-bottom:28px}
-.login-logo h1{font-size:30px;font-weight:900;color:var(--blue)}
-.login-logo h1 span{color:var(--text)}
-.login-logo p{font-size:14px;color:var(--text-lt);margin-top:4px}
-.fg{margin-bottom:16px}
-.fg label{display:block;font-size:13px;font-weight:600;color:var(--text-lt);margin-bottom:6px}
-.fg input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:15px;color:var(--text);background:var(--bg);transition:border-color .2s}
-.fg input:focus{outline:none;border-color:var(--blue);background:var(--white)}
-.btn-login{width:100%;padding:13px;background:var(--blue);color:var(--white);border:none;border-radius:10px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:background .2s;margin-top:8px}
-.btn-login:hover{background:var(--blue-dk)}
-.btn-login:disabled{opacity:.6;cursor:not-allowed}
-.login-err{display:none;background:var(--danger-lt);color:var(--danger);border:1px solid #fecaca;border-radius:8px;padding:10px 14px;font-size:13px;margin-top:12px;text-align:center}
-.demo-hint{margin-top:20px;border:1.5px solid var(--border);border-radius:12px;overflow:hidden}
-.demo-hint-hdr{padding:10px 16px;background:var(--bg);font-size:13px;font-weight:600;color:var(--text-lt);cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none}
-.demo-hint-body{display:none;padding:12px;display:none}
-.demo-hint-body.open{display:block}
-.dc{padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;transition:all .2s}
-.dc:last-child{margin-bottom:0}
-.dc:hover{border-color:var(--blue);background:var(--blue-lt)}
-.dc .dc-name{font-weight:700;font-size:14px}
-.dc .dc-email{font-size:12px;color:var(--text-lt)}
-.dc .dc-role{font-size:11px;font-weight:700;margin-top:4px;padding:2px 8px;border-radius:20px;display:inline-block}
-/* Role badges */
-.badge-admin{background:#fce7f3;color:#9d174d}
-.badge-field{background:#dbeafe;color:#1d4ed8}
-.badge-manager{background:#dcfce7;color:#166534}
-.badge-finance{background:#fef3c7;color:#92400e}
-/* App */
-#app{display:none}
-.app-header{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
-.app-logo{font-size:20px;font-weight:900;color:var(--blue)}
-.app-logo span{color:var(--text)}
-.header-right{display:flex;align-items:center;gap:12px}
-.user-chip{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg);border-radius:20px;font-size:13px}
-.user-chip .role-dot{width:8px;height:8px;border-radius:50%}
-.dot-admin{background:#ec4899}
-.dot-field{background:#3b82f6}
-.dot-manager{background:#22c55e}
-.dot-finance{background:#f59e0b}
-.btn-sm{padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--white);font-family:inherit;font-size:13px;font-weight:600;color:var(--text-lt);cursor:pointer;transition:all .2s}
-.btn-sm:hover{border-color:var(--danger);color:var(--danger)}
-/* Role switch bar (admin only) */
-.role-bar{background:var(--blue-lt);border-bottom:1px solid var(--blue-mid);padding:8px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.role-bar label{font-size:12px;font-weight:700;color:var(--blue-dk)}
-.rbtn{padding:5px 14px;border:1.5px solid var(--blue-mid);border-radius:20px;background:var(--white);font-family:inherit;font-size:12px;font-weight:600;color:var(--blue-dk);cursor:pointer;transition:all .2s}
-.rbtn.active,.rbtn:hover{background:var(--blue);color:var(--white);border-color:var(--blue)}
-/* Nav */
-.main-nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:2px;overflow-x:auto}
-.ntab{padding:14px 16px;border:none;background:none;font-family:inherit;font-size:14px;font-weight:500;color:var(--text-lt);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;transition:all .2s;position:relative}
-.ntab:hover{color:var(--blue)}
-.ntab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:700}
-.ntab .badge{position:absolute;top:8px;right:4px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center}
-/* Content */
-.app-body{padding:24px;max-width:1100px;margin:0 auto}
-.page{display:none}
-.page.active{display:block}
-.page-title{font-size:22px;font-weight:800;margin-bottom:20px}
-/* Stats */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:24px}
-.stat{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);text-align:center}
-.stat .num{font-size:28px;font-weight:900;color:var(--blue)}
-.stat .lbl{font-size:12px;color:var(--text-lt);margin-top:4px;font-weight:600}
-/* Cards */
-.card{background:var(--white);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
-.card-title{font-size:15px;font-weight:700;margin-bottom:16px;color:var(--text)}
-/* Buttons */
-.btn{padding:10px 18px;border:none;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
-.btn-primary{background:var(--blue);color:#fff}
-.btn-primary:hover{background:var(--blue-dk)}
-.btn-ok{background:var(--ok);color:#fff}
-.btn-danger{background:var(--danger);color:#fff}
-.btn-outline{background:var(--white);color:var(--blue);border:1.5px solid var(--blue)}
-.btn-warn{background:var(--warn);color:#fff}
-/* Scan button */
-.scan-btn{width:100%;padding:20px;background:linear-gradient(135deg,var(--blue),var(--blue-dk));color:#fff;border:none;border-radius:16px;font-family:inherit;font-size:18px;font-weight:800;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 15px rgba(59,130,246,.4);display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px}
-.scan-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(59,130,246,.5)}
-/* Camera modal */
-.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
-.modal-ov.open{display:flex}
-.modal{background:var(--white);border-radius:20px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
-.modal h2{font-size:18px;font-weight:800;margin-bottom:16px;text-align:center}
-/* Camera */
-.camera-wrap{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:4/3;margin-bottom:12px}
-#camera-video{width:100%;height:100%;object-fit:cover}
-.camera-guide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.camera-frame{width:80%;height:70%;border:2px solid rgba(255,255,255,.8);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.4)}
-.camera-hint{position:absolute;bottom:12px;left:0;right:0;text-align:center;color:#fff;font-size:13px;font-weight:600;background:rgba(0,0,0,.5);padding:6px;margin:0 12px;border-radius:8px}
-.camera-hint.good{background:rgba(34,197,94,.8)}
-.camera-hint.bad{background:rgba(239,68,68,.8)}
-.camera-actions{display:flex;gap:10px;margin-bottom:16px}
-/* AI Analysis */
-.ai-analyzing{text-align:center;padding:20px;display:none}
-.ai-analyzing .ai-spinner{width:50px;height:50px;border:4px solid var(--blue-mid);border-top:4px solid var(--blue);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
-/* Receipt form */
-.receipt-form{display:none}
-.receipt-form.show{display:block}
-.manual-tag{background:var(--warn-lt);color:#92400e;border:1px solid #fde68a;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;margin-right:6px}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.fg select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;color:var(--text);background:var(--white);cursor:pointer}
-.fg select:focus{outline:none;border-color:var(--blue)}
-.type-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-.type-btn{padding:8px 14px;border:2px solid var(--border);border-radius:8px;background:var(--white);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text-lt)}
-.type-btn.active{border-color:var(--blue);background:var(--blue-lt);color:var(--blue)}
-/* Tables */
-.tbl{width:100%;border-collapse:collapse;font-size:14px}
-.tbl th{background:var(--bg);padding:10px 14px;text-align:right;font-weight:700;color:var(--text-lt);border-bottom:2px solid var(--border);white-space:nowrap}
-.tbl td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
-.tbl tr:hover td{background:var(--bg)}
-/* Status */
-.status{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
-.status::before{content:'';width:7px;height:7px;border-radius:50%}
-.s-pending{background:var(--warn-lt);color:#92400e}.s-pending::before{background:var(--warn)}
-.s-ok{background:var(--ok-lt);color:#166534}.s-ok::before{background:var(--ok)}
-.s-rejected{background:var(--danger-lt);color:#991b1b}.s-rejected::before{background:var(--danger)}
-/* Budget bar */
-.budget-bar-wrap{background:var(--bg);border-radius:20px;height:12px;overflow:hidden;margin:8px 0}
-.budget-bar{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--ok),var(--blue));transition:width .5s}
-/* Punch clock */
-.punch-card{display:flex;flex-direction:column;align-items:center;padding:32px;gap:16px}
-.punch-time{font-size:48px;font-weight:900;color:var(--text);letter-spacing:2px;font-variant-numeric:tabular-nums}
-.punch-date{font-size:14px;color:var(--text-lt);font-weight:600}
-.punch-status{padding:8px 24px;border-radius:20px;font-weight:700;font-size:15px}
-.punch-in{background:var(--ok-lt);color:#166534}
-.punch-out{background:var(--danger-lt);color:#991b1b}
-.btn-punch{padding:18px 40px;border:none;border-radius:14px;font-family:inherit;font-size:18px;font-weight:800;cursor:pointer;transition:all .2s;color:#fff}
-.btn-punch-in{background:var(--ok)}
-.btn-punch-in:hover{background:#16a34a}
-.btn-punch-out{background:var(--danger)}
-.btn-punch-out:hover{background:#dc2626}
-/* KM form */
-.km-form{max-width:400px}
-/* Responsive */
-@media(max-width:600px){.form-row{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.punch-time{font-size:36px}}
-</style>
-</head>
-<body>
-<div id="loading">
-  <div style="font-size:32px;font-weight:900;color:var(--blue)">PettyCash <span style="color:var(--text)">AI</span></div>
-  <div class="spinner"></div>
-  <div style="margin-top:12px;font-size:14px;color:#64748B">טוען...</div>
-</div>
-<div id="toast-c"></div>
+NaN<script>
 
-<!-- LOGIN -->
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo">
-      <h1>PettyCash <span>AI</span></h1>
-      <p>מערכת ניהול קופה קטנה חכמה לארגונים</p>
-    </div>
-    <div class="fg"><label>אימייל</label><input type="email" id="l-email" placeholder="your@email.com" autocomplete="email"></div>
-    <div class="fg"><label>סיסמה</label><input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"></div>
-    <button class="btn-login" id="btn-login">כניסה למערכת</button>
-    <div class="login-err" id="l-err"></div>
-    <div class="demo-hint">
-      <div class="demo-hint-hdr" id="demo-hdr">🔑 פרטי כניסה לדמו <span id="demo-arr">▼</span></div>
-      <div class="demo-hint-body" id="demo-body">
-        <div class="dc" onclick="fill('yasminko27@gmail.com','')">
-          <div class="dc-name">יסמין (בעלים)</div>
-          <div class="dc-email">yasminko27@gmail.com</div>
-          <div class="dc-role badge-admin">אדמין</div>
-        </div>
-        <div class="dc" onclick="fill('dana@pettycash.app','Test123456')">
-          <div class="dc-name">דנה שמש</div>
-          <div class="dc-email">dana@pettycash.app | Test123456</div>
-          <div class="dc-role badge-field">רכזת שטח</div>
-        </div>
-        <div class="dc" onclick="fill('michal@pettycash.app','Test123456')">
-          <div class="dc-name">מיכל כהן</div>
-          <div class="dc-email">michal@pettycash.app | Test123456</div>
-          <div class="dc-role badge-manager">מנהלת</div>
-        </div>
-        <div class="dc" onclick="fill('yossi@pettycash.app','Test123456')">
-          <div class="dc-name">יוסי לוי</div>
-          <div class="dc-email">yossi@pettycash.app | Test123456</div>
-          <div class="dc-role badge-finance">כספים</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- APP -->
-<div id="app">
-  <header class="app-header">
-    <div class="app-logo">PettyCash <span>AI</span></div>
-    <div class="header-right">
-      <div class="user-chip">
-        <div class="role-dot" id="role-dot"></div>
-        <strong id="hdr-name"></strong>
-        <span style="color:var(--text-lt)">|</span>
-        <span id="hdr-role"></span>
-      </div>
-      <button class="btn-sm" onclick="doLogout()">יציאה</button>
-    </div>
-  </header>
-  <div class="role-bar" id="role-bar" style="display:none">
-    <label>👁 צפה כ:</label>
-    <button class="rbtn active" onclick="setView('field')">רכזת שטח</button>
-    <button class="rbtn" onclick="setView('manager')">מנהלת</button>
-    <button class="rbtn" onclick="setView('finance')">כספים</button>
-    <button class="rbtn" onclick="setView('admin')">אדמין</button>
-  </div>
-  <nav class="main-nav" id="main-nav"></nav>
-  <div class="app-body" id="app-body"></div>
-</div>
-
-<!-- CAMERA MODAL -->
-<div class="modal-ov" id="cam-modal">
-  <div class="modal" style="max-width:480px">
-    <h2>📸 סריקת קבלה</h2>
-    <div class="camera-wrap" id="cam-wrap">
-      <video id="camera-video" autoplay playsinline muted></video>
-      <div class="camera-guide">
-        <div class="camera-frame" id="cam-frame"></div>
-      </div>
-      <div class="camera-hint" id="cam-hint">יישר את הקבלה בתוך המסגרת</div>
-    </div>
-    <div class="camera-actions">
-      <button class="btn btn-primary" id="btn-capture" onclick="capturePhoto()" style="flex:1">📷 צלם</button>
-      <label class="btn btn-outline" style="flex:1;justify-content:center;cursor:pointer">
-        📁 העלה תמונה
-        <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFileUpload(event)">
-      </label>
-      <button class="btn btn-sm" onclick="closeCam()" style="border-color:var(--danger);color:var(--danger)">✕</button>
-    </div>
-    <canvas id="snap-canvas" style="display:none"></canvas>
-    <!-- AI Analyzing -->
-    <div class="ai-analyzing" id="ai-analyzing">
-      <div class="ai-spinner"></div>
-      <div style="font-size:15px;font-weight:700;color:var(--blue)">מנתח קבלה עם AI...</div>
-      <div style="font-size:13px;color:var(--text-lt);margin-top:4px">מזהה סכום, תאריך וקטגוריה</div>
-    </div>
-    <!-- Receipt Form -->
-    <div class="receipt-form" id="receipt-form">
-      <div style="display:flex;align-items:center;margin-bottom:14px">
-        <div style="font-size:15px;font-weight:700">✅ AI זיהה את הקבלה</div>
-        <span id="manual-tag" class="manual-tag" style="display:none">✏️ עודכן ידנית</span>
-      </div>
-      <div class="form-row">
-        <div class="fg"><label>סכום (₪)</label><input type="number" id="r-amount" placeholder="0.00" oninput="markManual()"></div>
-        <div class="fg"><label>תאריך</label><input type="date" id="r-date" oninput="markManual()"></div>
-      </div>
-      <div class="form-row">
-        <div class="fg"><label>שם עסק</label><input type="text" id="r-biz" placeholder="שם העסק" oninput="markManual()"></div>
-        <div class="fg"><label>שעה</label><input type="time" id="r-time" oninput="markManual()"></div>
-      </div>
-      <div class="fg">
-        <label>קטגוריה (AI בחר)</label>
-        <select id="r-cat" onchange="markManual()">
-          <option value="food">🍕 מזון</option>
-          <option value="activity">🎯 פעילות</option>
-          <option value="parking">🚗 חניה</option>
-          <option value="equipment">📦 ציוד</option>
-          <option value="transport">🚌 תחבורה</option>
-          <option value="other">📋 אחר</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label>סוג הוצאה</label>
-        <div class="type-btns">
-          <button class="type-btn active" onclick="setType('petty','this')" id="t-petty">💰 קופה קטנה</button>
-          <button class="type-btn" onclick="setType('personal','this')" id="t-personal">👤 החזר אישי</button>
-          <button class="type-btn" onclick="setType('card','this')" id="t-card">💳 כרטיס עמותה</button>
-        </div>
-      </div>
-      <div class="fg"><label>הערה (אופציונלי)</label><input type="text" id="r-note" placeholder="הערה למנהלת..."></div>
-      <div style="display:flex;gap:10px;margin-top:16px">
-        <button class="btn btn-primary" onclick="submitReceipt()" style="flex:1">📤 שלח לאישור</button>
-        <button class="btn btn-sm" onclick="resetCam()">🔄 סרוק שוב</button>
-      </div>
-    </div>
-  </div>
-</div>
-<script>
-const SURL='https://soqxqmpoertwxkwhlzen.supabase.co';
-const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvcXhxbXBvZXJ0d3hrd2hsemVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODc0NzYsImV4cCI6MjA5MzA2MzQ3Nn0.umDsrKOVKyA9tWnwtDHy-TgXl6MFT_JzA_fmNbCXeZI';
-const sb=supabase.createClient(SURL,SKEY);
-
-let CU=null,CP=null,VR=null,manualEdited=false,expenseType='petty',camStream=null;
-
-// ---- UTILS ----
-function toast(msg,type='ok',dur=3500){
-  const c=document.getElementById('toast-c');
-  const t=document.createElement('div');
-  t.className='toast '+type;t.textContent=msg;c.appendChild(t);
-  setTimeout(()=>t.remove(),dur);
-}
-function rl(role){return{field:'רכזת שטח',manager:'מנהלת',finance:'כספים',admin:'אדמין'}[role]||role}
-function rdot(role){return{field:'dot-field',manager:'dot-manager',finance:'dot-finance',admin:'dot-admin'}[role]||'dot-field'}
-function rbadge(role){return{field:'badge-field',manager:'badge-manager',finance:'badge-finance',admin:'badge-admin'}[role]||'badge-field'}
-function fmtDate(d){return new Date(d).toLocaleDateString('he-IL')}
+var SURL='https://soqxqmpoertwxkwhlzen.supabase.co';
+var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvcXhxbXBvZXJ0d3hrd2hsemVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODc0NzYsImV4cCI6MjA5MzA2MzQ3Nn0.umDsrKOVKyA9tWnwtDHy-TgXl6MFT_JzA_fmNbCXeZI';
+var sb=supabase.createClient(SURL,SKEY);
+var CU=null,CP=null,VR=null,manualEdited=false,expenseType='petty',camStream=null;
+function toast(msg,type,dur){type=type||'ok';dur=dur||3500;var c=document.getElementById('toast-c');var t=document.createElement('div');t.className='toast '+type;t.textContent=msg;c.appendChild(t);setTimeout(function(){t.remove()},dur)}
+function rl(r){var m={'field':'\u05e8\u05db\u05d6\u05ea \u05e9\u05d8\u05d7','manager':'\u05de\u05e0\u05d4\u05dc\u05ea','finance':'\u05db\u05e1\u05e4\u05d9\u05dd','admin':'\u05d0\u05d3\u05de\u05d9\u05df'};return m[r]||r}
+function rdot(r){var m={'field':'dot-field','manager':'dot-manager','finance':'dot-finance','admin':'dot-admin'};return m[r]||'dot-field'}
 function today(){return new Date().toISOString().split('T')[0]}
 function nowTime(){return new Date().toTimeString().slice(0,5)}
-
-// ---- AUTH ----
 function fill(e,p){document.getElementById('l-email').value=e;document.getElementById('l-pass').value=p;document.getElementById('l-email').focus()}
-document.getElementById('demo-hdr').onclick=()=>{
-  const b=document.getElementById('demo-body');const a=document.getElementById('demo-arr');
-  b.classList.toggle('open');a.textContent=b.classList.contains('open')?'▲':'▼';
-};
-document.getElementById('l-pass').onkeydown=e=>{if(e.key==='Enter')doLogin()};
+document.getElementById('demo-hdr').onclick=function(){var b=document.getElementById('demo-body');var a=document.getElementById('demo-arr');b.classList.toggle('open');a.textContent=b.classList.contains('open')?'\u25b2':'\u25bc'};
+document.getElementById('l-pass').onkeydown=function(e){if(e.key==='Enter')doLogin()};
 document.getElementById('btn-login').onclick=doLogin;
-
 async function doLogin(){
-  const email=document.getElementById('l-email').value.trim();
-  const pass=document.getElementById('l-pass').value;
-  const err=document.getElementById('l-err');
-  const btn=document.getElementById('btn-login');
+  var email=document.getElementById('l-email').value.trim();
+  var pass=document.getElementById('l-pass').value;
+  var err=document.getElementById('l-err');
+  var btn=document.getElementById('btn-login');
   err.style.display='none';
-  if(!email||!pass){err.textContent='נא למלא אימייל וסיסמה';err.style.display='block';return}
-  btn.disabled=true;btn.textContent='מתחבר...';
+  if(!email||!pass){err.textContent='\u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05d5\u05e1\u05d9\u05e1\u05de\u05d4';err.style.display='block';return}
+  btn.disabled=true;btn.textContent='\u05de\u05ea\u05d7\u05d1\u05e8...';
   try{
-    const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error)throw error;
-    const{data:prof,error:pe}=await sb.from('profiles').select('*').eq('id',data.user.id).single();
-    if(pe||!prof)throw new Error('פרופיל לא נמצא. פנה למנהל המערכת.');
-    CU=data.user;CP=prof;VR=prof.role;
+    var r=await sb.auth.signInWithPassword({email:email,password:pass});
+    if(r.error)throw r.error;
+    var pr=await sb.from('profiles').select('*').eq('id',r.data.user.id).single();
+    if(pr.error||!pr.data)throw new Error('\u05e4\u05e8\u05d5\u05e4\u05d9\u05dc \u05dc\u05d0 \u05e0\u05de\u05e6\u05d0. \u05e4\u05e0\u05d4 \u05dc\u05de\u05e0\u05d4\u05dc \u05d4\u05de\u05e2\u05e8\u05db\u05ea.');
+    CU=r.data.user;CP=pr.data;VR=pr.data.role;
     initApp();
     document.getElementById('login-screen').style.display='none';
     document.getElementById('app').style.display='block';
-    toast('ברוך הבא, '+prof.full_name+'! 👋','ok');
+    toast('\u05d1\u05e8\u05d5\u05da \u05d4\u05d1\u05d0, '+CP.full_name+'! \u{1F44B}','ok');
   }catch(e){
-    err.textContent=e.message==='Invalid login credentials'?'אימייל או סיסמה שגויים':e.message||'שגיאת כניסה';
+    err.textContent=e.message==='Invalid login credentials'?'\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05d0\u05d5 \u05e1\u05d9\u05e1\u05de\u05d4 \u05e9\u05d2\u05d5\u05d9\u05d9\u05dd':e.message||'\u05e9\u05d2\u05d9\u05d0\u05ea \u05db\u05e0\u05d9\u05e1\u05d4';
     err.style.display='block';
-  }finally{btn.disabled=false;btn.textContent='כניסה למערכת'}
+  }finally{btn.disabled=false;btn.textContent='\u05db\u05e0\u05d9\u05e1\u05d4 \u05dc\u05de\u05e2\u05e8\u05db\u05ea'}
 }
-
 async function doLogout(){
   await sb.auth.signOut();CU=null;CP=null;VR=null;
   document.getElementById('app').style.display='none';
   document.getElementById('login-screen').style.display='flex';
-  toast('יצאת מהמערכת','warn');
+  toast('\u05d9\u05e6\u05d0\u05ea \u05de\u05d4\u05de\u05e2\u05e8\u05db\u05ea','warn');
 }
-
-// ---- APP INIT ----
 function initApp(){
   document.getElementById('hdr-name').textContent=CP.full_name;
   document.getElementById('hdr-role').textContent=rl(CP.role);
-  const dot=document.getElementById('role-dot');
-  dot.className='role-dot '+rdot(CP.role);
+  document.getElementById('role-dot').className='role-dot '+rdot(CP.role);
   if(CP.role==='admin'){
     document.getElementById('role-bar').style.display='flex';
-    // set active btn
-    document.querySelectorAll('.rbtn').forEach(b=>b.classList.toggle('active',b.textContent.includes(rl(VR))));
+    document.querySelectorAll('.rbtn').forEach(function(b){b.classList.toggle('active',b.getAttribute('onclick').includes("'"+VR+"'"))});
   }
   renderNav();renderContent();
 }
-
 function setView(r){
   VR=r;
-  document.querySelectorAll('.rbtn').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick').includes("'"+r+"'")));
+  document.querySelectorAll('.rbtn').forEach(function(b){b.classList.toggle('active',b.getAttribute('onclick').includes("'"+r+"'"))});
   renderNav();renderContent();
-  toast('מציג ממשק: '+rl(r),'warn',2000);
+  toast('\u05de\u05e6\u05d9\u05d2 \u05de\u05de\u05e9\u05e7: '+rl(r),'warn',2000);
 }
-
-// ---- NAV ----
 function getTabs(){
-  const tabs=[{id:'expenses',label:'📋 הוצאות',badge:0}];
-  tabs.push({id:'punch',label:'⏰ שעות',badge:0});
-  tabs.push({id:'km',label:'🚗 ק"מ',badge:0});
-  if(VR==='manager'||VR==='finance'||VR==='admin') tabs.push({id:'approve',label:'✅ אישורים',badge:3});
-  if(VR==='finance'||VR==='admin') tabs.push({id:'finance',label:'💰 כספים',badge:0});
-  if(VR==='admin') tabs.push({id:'admin',label:'⚙️ ניהול',badge:0});
+  var tabs=[{id:'expenses',label:'\u{1F4CB} \u05d4\u05d5\u05e6\u05d0\u05d5\u05ea',badge:0},{id:'punch',label:'\u23F0 \u05e9\u05e2\u05d5\u05ea',badge:0},{id:'km',label:'\u{1F697} \u05e7"\u05de',badge:0}];
+  if(VR==='manager'||VR==='finance'||VR==='admin')tabs.push({id:'approve',label:'\u2705 \u05d0\u05d9\u05e9\u05d5\u05e8\u05d9\u05dd',badge:3});
+  if(VR==='finance'||VR==='admin')tabs.push({id:'finance',label:'\u{1F4B0} \u05db\u05e1\u05e4\u05d9\u05dd',badge:0});
+  if(VR==='admin')tabs.push({id:'admin',label:'\u2699\uFE0F \u05e0\u05d9\u05d4\u05d5\u05dc',badge:0});
   return tabs;
 }
-
 function renderNav(){
-  const tabs=getTabs();
-  document.getElementById('main-nav').innerHTML=tabs.map((t,i)=>
-    `<button class="ntab${i===0?' active':''}" data-tab="${t.id}" onclick="showTab('${t.id}')">${t.label}${t.badge?'<span class="badge">'+t.badge+'</span>':''}</button>`
-  ).join('');
+  var tabs=getTabs();
+  document.getElementById('main-nav').innerHTML=tabs.map(function(t,i){
+    return '<button class="ntab'+(i===0?' active':'')+'" data-tab="'+t.id+'" onclick="showTab(\''+t.id+'\')">'+t.label+(t.badge?'<span class="badge">'+t.badge+'</span>':'')+'</button>';
+  }).join('');
 }
-
 function showTab(id){
-  document.querySelectorAll('.ntab').forEach(t=>t.classList.toggle('active',t.dataset.tab===id));
-  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='pg-'+id));
+  document.querySelectorAll('.ntab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===id)});
+  document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('active',p.id==='pg-'+id)});
 }
 
-// ---- CONTENT ----
+
 function renderContent(){
-  const tabs=getTabs();
-  let html='';
+  var tabs=getTabs();
+  var role=VR;
+  var html='';
+  html+='<div class="page active" id="pg-expenses">';
+  html+='<div class="page-title">\u{1F4CB} \u05d4\u05d5\u05e6\u05d0\u05d5\u05ea \u05d5\u05d3\u05d9\u05d5\u05d5\u05d7\u05d9\u05dd</div>';
+  html+='<button class="scan-btn" onclick="openCam()">\u{1F4F7} \u05e1\u05e8\u05d5\u05e7 \u05e7\u05d1\u05dc\u05d4 \u05d7\u05d3\u05e9\u05d4<span style="font-size:13px;opacity:.8">AI \u05de\u05de\u05dc\u05d0 \u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9\u05ea</span></button>';
+  html+='<div class="stats"><div class="stat"><div class="num">12</div><div class="lbl">\u05d3\u05d9\u05d5\u05d5\u05d7\u05d9\u05dd \u05d4\u05d7\u05d5\u05d3\u05e9</div></div>';
+  html+='<div class="stat"><div class="num" style="color:var(--warn)">3</div><div class="lbl">\u05de\u05de\u05ea\u05d9\u05e0\u05d9\u05dd \u05dc\u05d0\u05d9\u05e9\u05d5\u05e8</div></div>';
+  html+='<div class="stat"><div class="num" style="color:var(--ok)">8</div><div class="lbl">\u05d0\u05d5\u05e9\u05e8\u05d5</div></div>';
+  html+='<div class="stat"><div class="num">\u20aa2,340</div><div class="lbl">\u05e1\u05d4"\u05db \u05d4\u05d2\u05e9\u05ea\u05d9</div></div></div>';
+  html+='<div class="card"><div class="card-title">\u05d4\u05d3\u05d9\u05d5\u05d5\u05d7\u05d9\u05dd \u05e9\u05dc\u05d9</div><div style="overflow-x:auto"><table class="tbl">';
+  html+='<thead><tr><th>\u05ea\u05d0\u05e8\u05d9\u05da</th><th>\u05e2\u05e1\u05e7</th><th>\u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4</th><th>\u05e1\u05db\u05d5\u05dd</th><th>\u05e1\u05d5\u05d2</th><th>\u05e1\u05d8\u05d8\u05d5\u05e1</th></tr></thead>';
+  html+='<tbody>';
+  html+='<tr><td>01/05/2026</td><td>\u05e8\u05de\u05d9 \u05dc\u05d5\u05d9</td><td>\u{1F355} \u05de\u05d6\u05d5\u05df</td><td>\u20aa150</td><td>\u05e7\u05d5\u05e4\u05d4 \u05e7\u05d8\u05e0\u05d4</td><td><span class="status s-ok">\u{1F7E2} \u05d0\u05d5\u05e9\u05e8</span></td></tr>';
+  html+='<tr><td>03/05/2026</td><td>\u05de\u05e0\u05d2\u05dc\u05d9\u05d9\u05d4</td><td>\u{1F3AF} \u05e4\u05e2\u05d9\u05dc\u05d5\u05ea</td><td>\u20aa320</td><td>\u05e7\u05d5\u05e4\u05d4 \u05e7\u05d8\u05e0\u05d4</td><td><span class="status s-pending">\u{1F7E1} \u05de\u05de\u05ea\u05d9\u05df</span></td></tr>';
+  html+='<tr><td>04/05/2026</td><td>\u05e4\u05d6 \u05d7\u05e0\u05d9\u05d4</td><td>\u{1F697} \u05d7\u05e0\u05d9\u05d4</td><td>\u20aa25</td><td>\u05d4\u05d7\u05d6\u05e8 \u05d0\u05d9\u05e9\u05d9</td><td><span class="status s-pending">\u{1F7E1} \u05de\u05de\u05ea\u05d9\u05df</span></td></tr>';
+  html+='<tr><td>05/05/2026</td><td>Office Depot</td><td>\u{1F4E6} \u05e6\u05d9\u05d5\u05d3</td><td>\u20aa180 <span class="manual-tag">\u270F\uFE0F \u05e2\u05d5\u05d3\u05db\u05df \u05d9\u05d3\u05e0\u05d9\u05ea</span></td><td>\u05e7\u05d5\u05e4\u05d4 \u05e7\u05d8\u05e0\u05d4</td><td><span class="status s-rejected">\u{1F534} \u05e0\u05d3\u05d7\u05d4</span></td></tr>';
+  html+='</tbody></table></div></div></div>';
 
-  // EXPENSES PAGE
-  html+=`<div class="page active" id="pg-expenses">
-  <div class="page-title">📋 הוצאות ודיווחים</div>
-  <button class="scan-btn" onclick="openCam()">📷 סרוק קבלה חדשה<span style="font-size:13px;opacity:.8">AI ממלא אוטומטית</span></button>
-  <div class="stats">
-    <div class="stat"><div class="num">12</div><div class="lbl">דיווחים החודש</div></div>
-    <div class="stat"><div class="num" style="color:var(--warn)">3</div><div class="lbl">ממתינים לאישור</div></div>
-    <div class="stat"><div class="num" style="color:var(--ok)">8</div><div class="lbl">אושרו</div></div>
-    <div class="stat"><div class="num">₪2,340</div><div class="lbl">סה"כ הגשתי</div></div>
-  </div>
-  <div class="card">
-    <div class="card-title">הדיווחים שלי</div>
-    <div style="overflow-x:auto">
-    <table class="tbl">
-      <thead><tr><th>תאריך</th><th>עסק</th><th>קטגוריה</th><th>סכום</th><th>סוג</th><th>סטטוס</th></tr></thead>
-      <tbody>
-        <tr><td>01/05/2026</td><td>רמי לוי</td><td>🍕 מזון</td><td>₪150</td><td>קופה קטנה</td><td><span class="status s-ok">🟢 אושר</span></td></tr>
-        <tr><td>03/05/2026</td><td>מנגלייה</td><td>🎯 פעילות</td><td>₪320</td><td>קופה קטנה</td><td><span class="status s-pending">🟡 ממתין</span></td></tr>
-        <tr><td>04/05/2026</td><td>פז חניה</td><td>🚗 חניה</td><td>₪25</td><td>החזר אישי</td><td><span class="status s-pending">🟡 ממתין</span></td></tr>
-        <tr><td>05/05/2026</td><td>Office Depot</td><td>📦 ציוד</td><td>₪180 <span class="manual-tag">✏️ עודכן ידנית</span></td><td>קופה קטנה</td><td><span class="status s-rejected">🔴 נדחה</span></td></tr>
-      </tbody>
-    </table>
-    </div>
-  </div>
-  </div>`;
+  html+='<div class="page" id="pg-punch"><div class="page-title">\u23F0 \u05e9\u05e2\u05d5\u05ea \u05e2\u05d1\u05d5\u05d3\u05d4</div>';
+  html+='<div class="card"><div class="punch-card">';
+  html+='<div class="punch-time" id="punch-clock">00:00:00</div>';
+  html+='<div class="punch-date" id="punch-date"></div>';
+  html+='<div class="punch-status punch-out" id="punch-status">\u05dc\u05d0 \u05de\u05d7\u05d5\u05d9\u05d1</div>';
+  html+='<button class="btn-punch btn-punch-in" id="btn-punch" onclick="togglePunch()">\u{1F7E2} \u05db\u05e0\u05d9\u05e1\u05d4 \u05dc\u05e2\u05d1\u05d5\u05d3\u05d4</button>';
+  html+='</div></div>';
+  html+='<div class="card"><div class="card-title">\u05d9\u05d5\u05de\u05df \u05e9\u05e2\u05d5\u05ea \u05d4\u05e9\u05d1\u05d5\u05e2</div><div style="overflow-x:auto"><table class="tbl">';
+  html+='<thead><tr><th>\u05d9\u05d5\u05dd</th><th>\u05db\u05e0\u05d9\u05e1\u05d4</th><th>\u05d9\u05e6\u05d9\u05d0\u05d4</th><th>\u05e1\u05d4"\u05db \u05e9\u05e2\u05d5\u05ea</th><th>\u05e1\u05d8\u05d8\u05d5\u05e1</th></tr></thead><tbody>';
+  html+='<tr><td>\u05e8\u05d0\u05e9\u05d5\u05df 03/05</td><td>08:30</td><td>16:30</td><td>8:00</td><td><span class="status s-ok">\u{1F7E2} \u05d0\u05d5\u05e9\u05e8</span></td></tr>';
+  html+='<tr><td>\u05e9\u05e0\u05d9 04/05</td><td>08:45</td><td>17:00</td><td>8:15</td><td><span class="status s-ok">\u{1F7E2} \u05d0\u05d5\u05e9\u05e8</span></td></tr>';
+  html+='<tr><td>\u05e9\u05dc\u05d9\u05e9\u05d9 05/05</td><td>09:00</td><td>-</td><td>-</td><td><span class="status s-pending">\u{1F7E1} \u05d1\u05e2\u05d1\u05d5\u05d3\u05d4</span></td></tr>';
+  html+='</tbody></table></div></div></div>';
 
-  // PUNCH PAGE
-  html+=`<div class="page" id="pg-punch">
-  <div class="page-title">⏰ שעות עבודה</div>
-  <div class="card">
-    <div class="punch-card">
-      <div class="punch-time" id="punch-clock">00:00:00</div>
-      <div class="punch-date" id="punch-date"></div>
-      <div class="punch-status punch-out" id="punch-status">לא מחויב</div>
-      <button class="btn-punch btn-punch-in" id="btn-punch" onclick="togglePunch()">🟢 כניסה לעבודה</button>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">יומן שעות השבוע</div>
-    <table class="tbl">
-      <thead><tr><th>יום</th><th>כניסה</th><th>יציאה</th><th>סה"כ שעות</th><th>סטטוס</th></tr></thead>
-      <tbody>
-        <tr><td>ראשון 03/05</td><td>08:30</td><td>16:30</td><td>8:00</td><td><span class="status s-ok">🟢 אושר</span></td></tr>
-        <tr><td>שני 04/05</td><td>08:45</td><td>17:00</td><td>8:15</td><td><span class="status s-ok">🟢 אושר</span></td></tr>
-        <tr><td>שלישי 05/05</td><td>09:00</td><td>-</td><td>-</td><td><span class="status s-pending">🟡 בעבודה</span></td></tr>
-      </tbody>
-    </table>
-  </div>
-  </div>`;
+  html+='<div class="page" id="pg-km"><div class="page-title">\u{1F697} \u05d3\u05d9\u05d5\u05d5\u05d7 \u05e7"\u05de</div>';
+  html+='<div class="card"><div class="card-title">\u05d3\u05d9\u05d5\u05d5\u05d7 \u05e7"\u05de \u05d9\u05d5\u05de\u05d9</div><div class="km-form">';
+  html+='<div class="fg"><label>\u05ea\u05d0\u05e8\u05d9\u05da</label><input type="date" id="km-date" value="'+today()+'"></div>';
+  html+='<div class="fg"><label>\u05de\u05d5\u05e6\u05d0</label><input type="text" id="km-from" placeholder="\u05de..."></div>';
+  html+='<div class="fg"><label>\u05d9\u05e2\u05d3</label><input type="text" id="km-to" placeholder="\u05d0\u05dc..."></div>';
+  html+='<div class="fg"><label>\u05e7"\u05de \u05e9\u05e0\u05e1\u05e2\u05ea\u05d9</label><input type="number" id="km-dist" placeholder="0" min="0" oninput="calcKM()"></div>';
+  html+='<div class="fg"><label>\u05de\u05d7\u05d9\u05e8 \u05dc\u05e7"\u05de</label><input type="number" id="km-price" value="1.50" step="0.01" readonly style="background:var(--bg);color:var(--text-lt)"></div>';
+  html+='<div class="fg"><label>\u05e1\u05d4"\u05db \u05dc\u05e7\u05d1\u05dc</label><input type="text" id="km-total" readonly placeholder="\u20aa0.00" style="background:var(--bg);font-weight:700;color:var(--blue)"></div>';
+  html+='<button class="btn btn-primary" onclick="submitKM()">\u{1F4E4} \u05e9\u05dc\u05d7 \u05d3\u05d9\u05d5\u05d5\u05d7</button>';
+  html+='</div></div>';
+  html+='<div class="card"><div class="card-title">\u05e7"\u05de \u05d4\u05d7\u05d5\u05d3\u05e9</div><div style="overflow-x:auto"><table class="tbl">';
+  html+='<thead><tr><th>\u05ea\u05d0\u05e8\u05d9\u05da</th><th>\u05de\u05e1\u05dc\u05d5\u05dc</th><th>\u05e7"\u05de</th><th>\u05e1\u05db\u05d5\u05dd</th><th>\u05e1\u05d8\u05d8\u05d5\u05e1</th></tr></thead><tbody>';
+  html+='<tr><td>01/05</td><td>\u05ea\u05dc \u05d0\u05d1\u05d9\u05d1 \u2192 \u05e8\u05de\u05ea \u05d2\u05df</td><td>12</td><td>\u20aa18</td><td><span class="status s-ok">\u{1F7E2} \u05d0\u05d5\u05e9\u05e8</span></td></tr>';
+  html+='<tr><td>03/05</td><td>\u05ea\u05dc \u05d0\u05d1\u05d9\u05d1 \u2192 \u05d1\u05e0\u05d9 \u05d1\u05e8\u05e7</td><td>8</td><td>\u20aa12</td><td><span class="status s-pending">\u{1F7E1} \u05de\u05de\u05ea\u05d9\u05df</span></td></tr>';
+  html+='</tbody></table></div></div></div>';
 
-  // KM PAGE
-  html+=`<div class="page" id="pg-km">
-  <div class="page-title">🚗 דיווח ק"מ</div>
-  <div class="card">
-    <div class="card-title">דיווח ק"מ יומי</div>
-    <div class="km-form">
-      <div class="fg"><label>תאריך</label><input type="date" id="km-date" value="${today()}"></div>
-      <div class="fg"><label>מוצא</label><input type="text" id="km-from" placeholder="מ..."></div>
-      <div class="fg"><label>יעד</label><input type="text" id="km-to" placeholder="אל..."></div>
-      <div class="fg"><label>ק"מ שנסעתי</label><input type="number" id="km-dist" placeholder="0" min="0"></div>
-      <div class="fg"><label>מחיר לק"מ</label><input type="number" id="km-price" value="1.50" step="0.01" readonly style="background:var(--bg);color:var(--text-lt)"></div>
-      <div class="fg"><label>סה"כ לקבל</label><input type="text" id="km-total" readonly placeholder="₪0.00" style="background:var(--bg);font-weight:700;color:var(--blue)"></div>
-      <button class="btn btn-primary" onclick="submitKM()">📤 שלח דיווח</button>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">ק"מ החודש</div>
-    <table class="tbl">
-      <thead><tr><th>תאריך</th><th>מוצא → יעד</th><th>ק"מ</th><th>סכום</th><th>סטטוס</th></tr></thead>
-      <tbody>
-        <tr><td>01/05</td><td>תל אביב → רמת גן</td><td>12</td><td>₪18</td><td><span class="status s-ok">🟢 אושר</span></td></tr>
-        <tr><td>03/05</td><td>תל אביב → בני ברק</td><td>8</td><td>₪12</td><td><span class="status s-pending">🟡 ממתין</span></td></tr>
-      </tbody>
-    </table>
-  </div>
-  </div>`;
 
-  // APPROVE PAGE (manager+)
-  if(VR==='manager'||VR==='finance'||VR==='admin'){
-    html+=`<div class="page" id="pg-approve">
-    <div class="page-title">✅ אישור דיווחים</div>
-    <div class="stats">
-      <div class="stat"><div class="num" style="color:var(--warn)">3</div><div class="lbl">ממתינים</div></div>
-      <div class="stat"><div class="num" style="color:var(--ok)">18</div><div class="lbl">אושרו החודש</div></div>
-      <div class="stat"><div class="num" style="color:var(--danger)">2</div><div class="lbl">נדחו</div></div>
-    </div>
-    <div class="card">
-      <div class="card-title">ממתינים לאישור 🟡</div>
-      <div style="overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th>עובד</th><th>תאריך</th><th>עסק</th><th>סכום</th><th>סוג</th><th>הערות</th><th>פעולה</th></tr></thead>
-        <tbody>
-          <tr>
-            <td>דנה שמש</td><td>03/05</td><td>מנגלייה</td><td>₪320</td><td>קופה קטנה</td>
-            <td>-</td>
-            <td><button class="btn btn-ok" style="padding:5px 12px;font-size:12px" onclick="approve(this)">✅ אשר</button> <button class="btn btn-danger" style="padding:5px 12px;font-size:12px" onclick="reject(this)">❌ דחה</button></td>
-          </tr>
-          <tr>
-            <td>דנה שמש</td><td>04/05</td><td>פז חניה</td><td>₪25</td><td>החזר אישי</td>
-            <td><span class="manual-tag">✏️ עודכן ידנית</span></td>
-            <td><button class="btn btn-ok" style="padding:5px 12px;font-size:12px" onclick="approve(this)">✅ אשר</button> <button class="btn btn-danger" style="padding:5px 12px;font-size:12px" onclick="reject(this)">❌ דחה</button></td>
-          </tr>
-          <tr>
-            <td>מיכל כהן</td><td>05/05</td><td>ק"מ יומי</td><td>₪12</td><td>ק"מ</td>
-            <td>-</td>
-            <td><button class="btn btn-ok" style="padding:5px 12px;font-size:12px" onclick="approve(this)">✅ אשר</button> <button class="btn btn-danger" style="padding:5px 12px;font-size:12px" onclick="reject(this)">❌ דחה</button></td>
-          </tr>
-        </tbody>
-      </table>
-      </div>
-    </div>
-    ${VR==='manager'?`<div class="card">
-      <div class="card-title">💰 קופה קטנה — פרויקט נרקיס</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div><div style="font-size:28px;font-weight:900;color:var(--blue)">₪1,530</div><div style="font-size:13px;color:var(--text-lt)">יתרה מתוך ₪2,000</div></div>
-        <button class="btn btn-outline" onclick="toast('בקשת חידוש קופה נשלחה לאיש הכספים!','ok')">🔄 בקש חידוש קופה</button>
-      </div>
-      <div class="budget-bar-wrap"><div class="budget-bar" style="width:76.5%"></div></div>
-      <div style="font-size:12px;color:var(--text-lt);margin-top:6px">₪470 נוצלו | ₪1,530 נותרו</div>
-    </div>`:''}
-    </div>`;
+  if(role==='manager'||role==='finance'||role==='admin'){
+    html+='<div class="page" id="pg-approve"><div class="page-title">\u2705 \u05d0\u05d9\u05e9\u05d5\u05e8 \u05d3\u05d9\u05d5\u05d5\u05d7\u05d9\u05dd</div>';
+    html+='<div class="stats"><div class="stat"><div class="num" style="color:var(--warn)">3</div><div class="lbl">\u05de\u05de\u05ea\u05d9\u05e0\u05d9\u05dd</div></div>';
+    html+='<div class="stat"><div class="num" style="color:var(--ok)">18</div><div class="lbl">\u05d0\u05d5\u05e9\u05e8\u05d5 \u05d4\u05d7\u05d5\u05d3\u05e9</div></div>';
+    html+='<div class="stat"><div class="num" style="color:var(--danger)">2</div><div class="lbl">\u05e0\u05d3\u05d7\u05d5</div></div></div>';
+    html+='<div class="card"><div class="card-title">\u05de\u05de\u05ea\u05d9\u05e0\u05d9\u05dd \u05dc\u05d0\u05d9\u05e9\u05d5\u05e8 \u{1F7E1}</div><div style="overflow-x:auto"><table class="tbl">';
+    html+='<thead><tr><th>\u05e2\u05d5\u05d1\u05d3</th><th>\u05ea\u05d0\u05e8\u05d9\u05da</th><th>\u05e2\u05e1\u05e7</th><th>\u05e1\u05db\u05d5\u05dd</th><th>\u05e1\u05d5\u05d2</th><th>\u05d4\u05e2\u05e8\u05d5\u05ea</th><th>\u05e4\u05e2\u05d5\u05dc\u05d4</th></tr></thead><tbody>';
+    html+='<tr><td>\u05d3\u05e0\u05d4 \u05e9\u05de\u05e9</td><td>03/05</td><td>\u05de\u05e0\u05d2\u05dc\u05d9\u05d9\u05d4</td><td>\u20aa320</td><td>\u05e7\u05d5\u05e4\u05d4 \u05e7\u05d8\u05e0\u05d4</td><td>-</td><td><button class="btn btn-ok" style="padding:5px 12px;font-size:12px" onclick="approve(this)">\u2705 \u05d0\u05e9\u05e8</button> <button class="btn btn-danger" style="padding:5px 12px;font-size:12px" onclick="reject(this)">\u274C \u05d3\u05d7\u05d4</button></td></tr>';
+    html+='<tr><td>\u05d3\u05e0\u05d4 \u05e9\u05de\u05e9</td><td>04/05</td><td>\u05e4\u05d6 \u05d7\u05e0\u05d9\u05d4</td><td>\u20aa25</td><td>\u05d4\u05d7\u05d6\u05e8 \u05d0\u05d9\u05e9\u05d9</td><td><span class="manual-tag">\u270F\uFE0F \u05e2\u05d5\u05d3\u05db\u05df \u05d9\u05d3\u05e0\u05d9\u05ea</span></td><td><button class="btn btn-ok" style="padding:5px 12px;font-size:12px" onclick="approve(this)">\u2705 \u05d0\u05e9\u05e8</button> <button class="btn btn-danger" style="padding:5px 12px;font-size:12px" onclick="reject(this)">\u274C \u05d3\u05d7\u05d4</button></td></tr>';
+    html+='</tbody></table></div></div>';
+    if(role==='manager'){
+      html+='<div class="card"><div class="card-title">\u{1F4B0} \u05e7\u05d5\u05e4\u05d4 \u05e7\u05d8\u05e0\u05d4</div>';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+      html+='<div><div style="font-size:28px;font-weight:900;color:var(--blue)">\u20aa1,530</div><div style="font-size:13px;color:var(--text-lt)">\u05d9\u05ea\u05e8\u05d4 \u05de\u05ea\u05d5\u05da \u20aa2,000</div></div>';
+      html+='<button class="btn btn-outline" onclick="toast('\u05d1\u05e7\u05e9\u05ea \u05d7\u05d9\u05d3\u05d5\u05e9 \u05e7\u05d5\u05e4\u05d4 \u05e0\u05e9\u05dc\u05d7\u05d4!','ok')">\u05d1\u05e7\u05e9 \u05d7\u05d9\u05d3\u05d5\u05e9 \u05e7\u05d5\u05e4\u05d4</button></div>';
+      html+='<div class="budget-bar-wrap"><div class="budget-bar" style="width:76.5%"></div></div>';
+      html+='<div style="font-size:12px;color:var(--text-lt);margin-top:6px">\u20aa470 \u05e0\u05d5\u05e6\u05dc\u05d5 | \u20aa1,530 \u05e0\u05d5\u05ea\u05e8\u05d5</div></div>';
+    }
+    html+='</div>';
   }
-
-  // FINANCE PAGE
-  if(VR==='finance'||VR==='admin'){
-    html+=`<div class="page" id="pg-finance">
-    <div class="page-title">💰 ניהול כספים</div>
-    <div class="stats">
-      <div class="stat"><div class="num">₪8,200</div><div class="lbl">קופות קטנות פעילות</div></div>
-      <div class="stat"><div class="num">₪3,400</div><div class="lbl">החזרים לסוף חודש</div></div>
-      <div class="stat"><div class="num">₪1,890</div><div class="lbl">ק"מ לשכר</div></div>
-      <div class="stat"><div class="num">5</div><div class="lbl">פרויקטים פעילים</div></div>
-    </div>
-    <div class="card">
-      <div class="card-title">קופות קטנות לפי פרויקט</div>
-      <table class="tbl">
-        <thead><tr><th>פרויקט</th><th>מנהלת</th><th>תקציב</th><th>נוצל</th><th>יתרה</th><th>סטטוס</th></tr></thead>
-        <tbody>
-          <tr><td>נרקיס</td><td>מיכל כהן</td><td>₪2,000</td><td>₪470</td><td>₪1,530</td><td><span class="status s-ok">🟢 תקין</span></td></tr>
-          <tr><td>שי</td><td>הילה רז</td><td>₪2,000</td><td>₪1,850</td><td>₪150</td><td><span class="status s-pending">🟡 נמוך</span></td></tr>
-          <tr><td>אביב</td><td>-</td><td>₪1,500</td><td>₪800</td><td>₪700</td><td><span class="status s-ok">🟢 תקין</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="card">
-      <div class="card-title">החזרי הוצאות אישיות — סוף חודש</div>
-      <table class="tbl">
-        <thead><tr><th>עובד</th><th>פרויקט</th><th>סה"כ לחודש</th><th>סטטוס</th></tr></thead>
-        <tbody>
-          <tr><td>דנה שמש</td><td>נרקיס</td><td>₪245</td><td><span class="status s-pending">🟡 ממתין אישור</span></td></tr>
-          <tr><td>יוסי לוי</td><td>שי</td><td>₪180</td><td><span class="status s-ok">🟢 אושר</span></td></tr>
-        </tbody>
-      </table>
-      <button class="btn btn-primary" style="margin-top:12px" onclick="toast('דוח חודשי יוצא לאקסל','ok')">📊 ייצא לאקסל</button>
-    </div>
-    </div>`;
+  if(role==='finance'||role==='admin'){
+    html+='<div class="page" id="pg-finance"><div class="page-title">\u{1F4B0} \u05e0\u05d9\u05d4\u05d5\u05dc \u05db\u05e1\u05e4\u05d9\u05dd</div>';
+    html+='<div class="stats">';
+    html+='<div class="stat"><div class="num">\u20aa8,200</div><div class="lbl">\u05e7\u05d5\u05e4\u05d5\u05ea \u05e7\u05d8\u05e0\u05d5\u05ea</div></div>';
+    html+='<div class="stat"><div class="num">\u20aa3,400</div><div class="lbl">\u05d4\u05d7\u05d6\u05e8\u05d9\u05dd \u05dc\u05e1\u05d5\u05e3 \u05d7\u05d5\u05d3\u05e9</div></div>';
+    html+='<div class="stat"><div class="num">\u20aa1,890</div><div class="lbl">\u05e7"\u05de \u05dc\u05e9\u05db\u05e8</div></div>';
+    html+='<div class="stat"><div class="num">5</div><div class="lbl">\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8\u05d9\u05dd \u05e4\u05e2\u05d9\u05dc\u05d9\u05dd</div></div></div>';
+    html+='<div class="card"><div class="card-title">\u05e7\u05d5\u05e4\u05d5\u05ea \u05e7\u05d8\u05e0\u05d5\u05ea \u05dc\u05e4\u05d9 \u05e4\u05e8\u05d5\u05d9\u05e7\u05d8</div><div style="overflow-x:auto"><table class="tbl">';
+    html+='<thead><tr><th>\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8</th><th>\u05de\u05e0\u05d4\u05dc\u05ea</th><th>\u05ea\u05e7\u05e6\u05d9\u05d1</th><th>\u05e0\u05d5\u05e6\u05dc</th><th>\u05d9\u05ea\u05e8\u05d4</th><th>\u05e1\u05d8\u05d8\u05d5\u05e1</th></tr></thead><tbody>';
+    html+='<tr><td>\u05e0\u05e8\u05e7\u05d9\u05e1</td><td>\u05de\u05d9\u05db\u05dc \u05db\u05d4\u05df</td><td>\u20aa2,000</td><td>\u20aa470</td><td>\u20aa1,530</td><td><span class="status s-ok">\u{1F7E2} \u05ea\u05e7\u05d9\u05df</span></td></tr>';
+    html+='<tr><td>\u05e9\u05d9</td><td>\u05d4\u05d9\u05dc\u05d4 \u05e8\u05d6</td><td>\u20aa2,000</td><td>\u20aa1,850</td><td>\u20aa150</td><td><span class="status s-pending">\u{1F7E1} \u05e0\u05de\u05d5\u05da</span></td></tr>';
+    html+='</tbody></table></div></div>';
+    html+='<div class="card"><div class="card-title">\u05d4\u05d7\u05d6\u05e8\u05d9 \u05d4\u05d5\u05e6\u05d0\u05d5\u05ea \u05d0\u05d9\u05e9\u05d9\u05d5\u05ea</div><div style="overflow-x:auto"><table class="tbl">';
+    html+='<thead><tr><th>\u05e2\u05d5\u05d1\u05d3</th><th>\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8</th><th>\u05e1\u05d4"\u05db</th><th>\u05e1\u05d8\u05d8\u05d5\u05e1</th></tr></thead><tbody>';
+    html+='<tr><td>\u05d3\u05e0\u05d4 \u05e9\u05de\u05e9</td><td>\u05e0\u05e8\u05e7\u05d9\u05e1</td><td>\u20aa245</td><td><span class="status s-pending">\u{1F7E1} \u05de\u05de\u05ea\u05d9\u05df</span></td></tr>';
+    html+='<tr><td>\u05d9\u05d5\u05e1\u05d9 \u05dc\u05d5\u05d9</td><td>\u05e9\u05d9</td><td>\u20aa180</td><td><span class="status s-ok">\u{1F7E2} \u05d0\u05d5\u05e9\u05e8</span></td></tr>';
+    html+='</tbody></table></div>';
+    html+='<button class="btn btn-primary" style="margin-top:12px" onclick="toast('\u05d9\u05d5\u05e6\u05d0 \u05dc\u05d0\u05e7\u05e1\u05dc...','ok')">\u05d9\u05d9\u05e6\u05d0 \u05dc\u05d0\u05e7\u05e1\u05dc</button></div></div>';
   }
-
-  // ADMIN PAGE
-  if(VR==='admin'){
-    html+=`<div class="page" id="pg-admin">
-    <div class="page-title">⚙️ ניהול מערכת</div>
-    <div class="card">
-      <div class="card-title">פרויקטים פעילים</div>
-      <table class="tbl">
-        <thead><tr><th>שם פרויקט</th><th>מנהלת</th><th>עובדים</th><th>קופה קטנה</th><th>פעולה</th></tr></thead>
-        <tbody>
-          <tr><td>נרקיס</td><td>מיכל כהן</td><td>4</td><td>₪1,530 / ₪2,000</td><td><button class="btn btn-outline" style="padding:5px 12px;font-size:12px">ערוך</button></td></tr>
-          <tr><td>שי</td><td>הילה רז</td><td>3</td><td>₪150 / ₪2,000</td><td><button class="btn btn-outline" style="padding:5px 12px;font-size:12px">ערוך</button></td></tr>
-          <tr><td>אביב</td><td>(אדמין)</td><td>2</td><td>₪700 / ₪1,500</td><td><button class="btn btn-outline" style="padding:5px 12px;font-size:12px">ערוך</button></td></tr>
-        </tbody>
-      </table>
-      <button class="btn btn-primary" style="margin-top:12px" onclick="toast('טופס פרויקט חדש — בקרוב!','warn')">➕ פרויקט חדש</button>
-    </div>
-    <div class="card">
-      <div class="card-title">עובדים ומשתמשים</div>
-      <table class="tbl">
-        <thead><tr><th>שם</th><th>אימייל</th><th>תפקיד</th><th>פרויקט</th><th>פעולה</th></tr></thead>
-        <tbody>
-          <tr><td>יסמין (בעלים)</td><td>yasminko27@gmail.com</td><td><span class="dc-role badge-admin">אדמין</span></td><td>-</td><td>-</td></tr>
-          <tr><td>מיכל כהן</td><td>michal@pettycash.app</td><td><span class="dc-role badge-manager">מנהלת</span></td><td>נרקיס</td><td><button class="btn btn-outline" style="padding:5px 12px;font-size:12px">ערוך</button></td></tr>
-          <tr><td>הילה רז</td><td>hila@pettycash.app</td><td><span class="dc-role badge-admin">אדמין</span></td><td>שי</td><td><button class="btn btn-outline" style="padding:5px 12px;font-size:12px">ערוך</button></td></tr>
-          <tr><td>דנה שמש</td><td>dana@pettycash.app</td><td><span class="dc-role badge-field">רכזת שטח</span></td><td>נרקיס</td><td><button class="btn btn-outline" style="padding:5px 12px;font-size:12px">ערוך</button></td></tr>
-          <tr><td>יוסי לוי</td><td>yossi@pettycash.app</td><td><span class="dc-role badge-finance">כספים</span></td><td>-</td><td><button class="btn btn-outline" style="padding:5px 12px;font-size:12px">ערוך</button></td></tr>
-        </tbody>
-      </table>
-      <button class="btn btn-primary" style="margin-top:12px" onclick="toast('הוספת עובד — בקרוב!','warn')">➕ הוסף עובד</button>
-    </div>
-    <div class="card">
-      <div style="display:flex;gap:16px;flex-wrap:wrap">
-        <div class="fg" style="flex:1;min-width:200px"><label>מחיר לק"מ (₪)</label><input type="number" value="1.50" step="0.01" id="km-rate" onchange="document.getElementById('km-price')&&(document.getElementById('km-price').value=this.value)"></div>
-        <div class="fg" style="flex:1;min-width:200px"><label>OpenAI API Key (לסריקה אמיתית)</label><input type="password" id="ai-key" placeholder="sk-..." onchange="localStorage.setItem('oai_key',this.value)"></div>
-      </div>
-      <button class="btn btn-primary" onclick="toast('הגדרות נשמרו!','ok')">💾 שמור הגדרות</button>
-    </div>
-    </div>`;
+  if(role==='admin'){
+    html+='<div class="page" id="pg-admin"><div class="page-title">\u2699\uFE0F \u05e0\u05d9\u05d4\u05d5\u05dc \u05de\u05e2\u05e8\u05db\u05ea</div>';
+    html+='<div class="card"><div class="card-title">\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8\u05d9\u05dd \u05e4\u05e2\u05d9\u05dc\u05d9\u05dd</div><div style="overflow-x:auto"><table class="tbl">';
+    html+='<thead><tr><th>\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8</th><th>\u05de\u05e0\u05d4\u05dc\u05ea</th><th>\u05e2\u05d5\u05d1\u05d3\u05d9\u05dd</th><th>\u05e7\u05d5\u05e4\u05d4</th><th>\u05e4\u05e2\u05d5\u05dc\u05d4</th></tr></thead><tbody>';
+    html+='<tr><td>\u05e0\u05e8\u05e7\u05d9\u05e1</td><td>\u05de\u05d9\u05db\u05dc \u05db\u05d4\u05df</td><td>4</td><td>\u20aa1,530/\u20aa2,000</td><td><button class="btn btn-outline" style="padding:5px 12px;font-size:12px">\u05e2\u05e8\u05d5\u05da</button></td></tr>';
+    html+='<tr><td>\u05e9\u05d9</td><td>\u05d4\u05d9\u05dc\u05d4 \u05e8\u05d6</td><td>3</td><td>\u20aa150/\u20aa2,000</td><td><button class="btn btn-outline" style="padding:5px 12px;font-size:12px">\u05e2\u05e8\u05d5\u05da</button></td></tr>';
+    html+='</tbody></table>';
+    html+='<button class="btn btn-primary" style="margin-top:12px" onclick="toast('\u05d1\u05e7\u05e8\u05d5\u05d1!','warn')">\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8 \u05d7\u05d3\u05e9</button></div>';
+    html+='<div class="card"><div class="card-title">\u05e2\u05d5\u05d1\u05d3\u05d9\u05dd \u05d5\u05de\u05e9\u05ea\u05de\u05e9\u05d9\u05dd</div><div style="overflow-x:auto"><table class="tbl">';
+    html+='<thead><tr><th>\u05e9\u05dd</th><th>\u05d0\u05d9\u05de\u05d9\u05d9\u05dc</th><th>\u05ea\u05e4\u05e7\u05d9\u05d3</th><th>\u05e4\u05e8\u05d5\u05d9\u05e7\u05d8</th><th>\u05e4\u05e2\u05d5\u05dc\u05d4</th></tr></thead><tbody>';
+    html+='<tr><td>\u05d9\u05e1\u05de\u05d9\u05df</td><td>yasminko27@gmail.com</td><td><span class="dc-role badge-admin">\u05d0\u05d3\u05de\u05d9\u05df</span></td><td>-</td><td>-</td></tr>';
+    html+='<tr><td>\u05de\u05d9\u05db\u05dc \u05db\u05d4\u05df</td><td>michal@pettycash.app</td><td><span class="dc-role badge-manager">\u05de\u05e0\u05d4\u05dc\u05ea</span></td><td>\u05e0\u05e8\u05e7\u05d9\u05e1</td><td><button class="btn btn-outline" style="padding:5px 12px;font-size:12px">\u05e2\u05e8\u05d5\u05da</button></td></tr>';
+    html+='<tr><td>\u05d3\u05e0\u05d4 \u05e9\u05de\u05e9</td><td>dana@pettycash.app</td><td><span class="dc-role badge-field">\u05e8\u05db\u05d6\u05ea \u05e9\u05d8\u05d7</span></td><td>\u05e0\u05e8\u05e7\u05d9\u05e1</td><td><button class="btn btn-outline" style="padding:5px 12px;font-size:12px">\u05e2\u05e8\u05d5\u05da</button></td></tr>';
+    html+='<tr><td>\u05d9\u05d5\u05e1\u05d9 \u05dc\u05d5\u05d9</td><td>yossi@pettycash.app</td><td><span class="dc-role badge-finance">\u05db\u05e1\u05e4\u05d9\u05dd</span></td><td>-</td><td><button class="btn btn-outline" style="padding:5px 12px;font-size:12px">\u05e2\u05e8\u05d5\u05da</button></td></tr>';
+    html+='</tbody></table>';
+    html+='<button class="btn btn-primary" style="margin-top:12px" onclick="toast('\u05d4\u05d5\u05e1\u05e4\u05ea \u05e2\u05d5\u05d1\u05d3 - \u05d1\u05e7\u05e8\u05d5\u05d1!','warn')">\u05d4\u05d5\u05e1\u05e3 \u05e2\u05d5\u05d1\u05d3</button></div>';
+    html+='<div class="card">';
+    html+='<div class="fg" style="max-width:300px"><label>OpenAI API Key</label><input type="password" id="ai-key" placeholder="sk-..." onchange="localStorage.setItem('oai_key',this.value)"></div>';
+    html+='<div class="fg" style="max-width:200px"><label>\u05de\u05d7\u05d9\u05e8 \u05dc\u05e7"\u05de (\u20aa)</label><input type="number" id="km-rate" value="1.50" step="0.01"></div>';
+    html+='<button class="btn btn-primary" onclick="toast('\u05e0\u05e9\u05de\u05e8!','ok')">\u05e9\u05de\u05d5\u05e8 \u05d4\u05d2\u05d3\u05e8\u05d5\u05ea</button></div></div>';
   }
-
   document.getElementById('app-body').innerHTML=html;
-
-  // init clock
   startClock();
-  // km calc
-  const kd=document.getElementById('km-dist');
-  if(kd)kd.oninput=calcKM;
 }
-
-// ---- PUNCH CLOCK ----
-let punchInterval=null,punchIn=false,punchStart=null;
+var punchIn=false;
 function startClock(){
-  const el=document.getElementById('punch-clock');
-  const de=document.getElementById('punch-date');
+  var el=document.getElementById('punch-clock');
+  var de=document.getElementById('punch-date');
   if(!el)return;
-  function update(){
-    const now=new Date();
+  function upd(){
+    var now=new Date();
     if(el)el.textContent=now.toLocaleTimeString('he-IL');
     if(de)de.textContent=now.toLocaleDateString('he-IL',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   }
-  update();setInterval(update,1000);
+  upd();setInterval(upd,1000);
 }
 function togglePunch(){
   punchIn=!punchIn;
-  const btn=document.getElementById('btn-punch');
-  const status=document.getElementById('punch-status');
+  var btn=document.getElementById('btn-punch');
+  var st=document.getElementById('punch-status');
   if(punchIn){
-    btn.className='btn-punch btn-punch-out';btn.textContent='🔴 יציאה מעבודה';
-    status.className='punch-status punch-in';status.textContent='בעבודה מ-'+nowTime();
-    toast('✅ כניסה לעבודה נרשמה: '+nowTime(),'ok');
+    btn.className='btn-punch btn-punch-out';btn.innerHTML='\u{1F534} \u05d9\u05e6\u05d9\u05d0\u05d4 \u05de\u05e2\u05d1\u05d5\u05d3\u05d4';
+    st.className='punch-status punch-in';st.textContent='\u05d1\u05e2\u05d1\u05d5\u05d3\u05d4 \u05de-'+nowTime();
+    toast('\u2705 \u05db\u05e0\u05d9\u05e1\u05d4 \u05e0\u05e8\u05e9\u05de\u05d4: '+nowTime(),'ok');
   }else{
-    btn.className='btn-punch btn-punch-in';btn.textContent='🟢 כניסה לעבודה';
-    status.className='punch-status punch-out';status.textContent='לא מחויב';
-    toast('👋 יציאה נרשמה. יום טוב!','warn');
+    btn.className='btn-punch btn-punch-in';btn.innerHTML='\u{1F7E2} \u05db\u05e0\u05d9\u05e1\u05d4 \u05dc\u05e2\u05d1\u05d5\u05d3\u05d4';
+    st.className='punch-status punch-out';st.textContent='\u05dc\u05d0 \u05de\u05d7\u05d5\u05d9\u05d1';
+    toast('\u{1F44B} \u05d9\u05e6\u05d9\u05d0\u05d4 \u05e0\u05e8\u05e9\u05de\u05d4. \u05d9\u05d5\u05dd \u05d8\u05d5\u05d1!','warn');
   }
 }
-
-// ---- KM ----
 function calcKM(){
-  const dist=parseFloat(document.getElementById('km-dist')?.value||0);
-  const price=parseFloat(document.getElementById('km-price')?.value||1.5);
-  const total=document.getElementById('km-total');
-  if(total)total.value='₪'+(dist*price).toFixed(2);
+  var d=parseFloat(document.getElementById('km-dist').value||0);
+  var p=parseFloat(document.getElementById('km-price').value||1.5);
+  var t=document.getElementById('km-total');
+  if(t)t.value='\u20aa'+(d*p).toFixed(2);
 }
 function submitKM(){
-  const from=document.getElementById('km-from')?.value;
-  const to=document.getElementById('km-to')?.value;
-  const dist=document.getElementById('km-dist')?.value;
-  if(!from||!to||!dist){toast('נא למלא את כל השדות','err');return}
-  toast('✅ דיווח ק"מ נשלח לאישור! '+dist+' ק"מ','ok');
+  var f=document.getElementById('km-from').value;
+  var to=document.getElementById('km-to').value;
+  var d=document.getElementById('km-dist').value;
+  if(!f||!to||!d){toast('\u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05d0\u05ea \u05db\u05dc \u05d4\u05e9\u05d3\u05d5\u05ea','err');return}
+  toast('\u2705 \u05d3\u05d9\u05d5\u05d5\u05d7 \u05e0\u05e9\u05dc\u05d7! '+d+' km','ok');
   document.getElementById('km-from').value='';
   document.getElementById('km-to').value='';
   document.getElementById('km-dist').value='';
   document.getElementById('km-total').value='';
 }
-
-// ---- APPROVE/REJECT ----
 function approve(btn){
-  const row=btn.closest('tr');
-  row.querySelector('td:last-child').innerHTML='<span class="status s-ok">🟢 אושר</span>';
-  toast('✅ הדיווח אושר!','ok');
+  var row=btn.closest('tr');
+  row.querySelector('td:last-child').innerHTML='<span class="status s-ok">\u{1F7E2} \u05d0\u05d5\u05e9\u05e8</span>';
+  toast('\u2705 \u05d4\u05d3\u05d9\u05d5\u05d5\u05d7 \u05d0\u05d5\u05e9\u05e8!','ok');
 }
 function reject(btn){
-  const row=btn.closest('tr');
-  row.querySelector('td:last-child').innerHTML='<span class="status s-rejected">🔴 נדחה</span>';
-  toast('❌ הדיווח נדחה','err');
+  var row=btn.closest('tr');
+  row.querySelector('td:last-child').innerHTML='<span class="status s-rejected">\u{1F534} \u05e0\u05d3\u05d7\u05d4</span>';
+  toast('\u274C \u05d4\u05d3\u05d9\u05d5\u05d5\u05d7 \u05e0\u05d3\u05d7\u05d4','err');
 }
 
-// ---- CAMERA ----
+
 function openCam(){
   document.getElementById('cam-modal').classList.add('open');
-  resetCam();
-  startCamera();
+  resetCam();startCamera();
 }
-function closeCam(){
-  stopCamera();
-  document.getElementById('cam-modal').classList.remove('open');
-}
+function closeCam(){stopCamera();document.getElementById('cam-modal').classList.remove('open')}
 function resetCam(){
   document.getElementById('ai-analyzing').style.display='none';
   document.getElementById('receipt-form').classList.remove('show');
@@ -694,109 +262,100 @@ function resetCam(){
 }
 async function startCamera(){
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    var stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
     camStream=stream;
-    const video=document.getElementById('camera-video');
+    var video=document.getElementById('camera-video');
     video.srcObject=stream;
-    simulateQualityCheck();
+    simulateQuality();
   }catch(e){
-    toast('לא ניתן לגשת למצלמה. השתמש ב"העלה תמונה"','warn');
+    toast('\u05dc\u05d0 \u05e0\u05d9\u05ea\u05df \u05dc\u05d2\u05e9\u05ea \u05dc\u05de\u05e6\u05dc\u05de\u05d4. \u05d4\u05e9\u05ea\u05de\u05e9 \u05d1\u05d4\u05e2\u05dc\u05d0\u05ea \u05ea\u05de\u05d5\u05e0\u05d4','warn');
     document.getElementById('cam-wrap').style.display='none';
   }
 }
-function stopCamera(){
-  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
-}
-let qualityTimer=null;
-function simulateQualityCheck(){
-  const hints=['יישר את הקבלה בתוך המסגרת','קרב קצת יותר לקבלה','הצילום מטושטש — החזק בעדינות','מצוין! לחץ לצילום 📷'];
-  const classes=['','bad','bad','good'];
-  let i=0;
-  qualityTimer=setInterval(()=>{
-    const hint=document.getElementById('cam-hint');
-    const frame=document.getElementById('cam-frame');
-    if(!hint)return clearInterval(qualityTimer);
+function stopCamera(){if(camStream){camStream.getTracks().forEach(function(t){t.stop()});camStream=null}}
+var qt=null;
+function simulateQuality(){
+  var hints=['\u05d9\u05d9\u05e9\u05e8 \u05d0\u05ea \u05d4\u05e7\u05d1\u05dc\u05d4 \u05d1\u05ea\u05d5\u05da \u05d4\u05de\u05e1\u05d2\u05e8\u05ea','\u05e7\u05e8\u05d1 \u05e7\u05e6\u05ea \u05d9\u05d5\u05ea\u05e8 \u05dc\u05e7\u05d1\u05dc\u05d4','\u05d4\u05e6\u05d9\u05dc\u05d5\u05dd \u05de\u05d8\u05d5\u05e9\u05d8\u05e9 - \u05d4\u05d7\u05d6\u05e7 \u05d1\u05e2\u05d3\u05d9\u05e0\u05d5\u05ea','\u05de\u05e6\u05d5\u05d9\u05df! \u05dc\u05d7\u05e5 \u05dc\u05e6\u05d9\u05dc\u05d5\u05dd \u{1F4F7}'];
+  var i=0;
+  qt=setInterval(function(){
+    var hint=document.getElementById('cam-hint');
+    var frame=document.getElementById('cam-frame');
+    if(!hint){clearInterval(qt);return}
+    var good=i%hints.length===3;
     hint.textContent=hints[i%hints.length];
-    hint.className='camera-hint '+(i%hints.length===3?'good':'bad');
-    frame.style.borderColor=i%hints.length===3?'rgba(34,197,94,.9)':'rgba(239,68,68,.7)';
+    hint.className='camera-hint '+(good?'good':'bad');
+    frame.style.borderColor=good?'rgba(34,197,94,.9)':'rgba(239,68,68,.7)';
     i++;
-    if(i>=hints.length)clearInterval(qualityTimer);
+    if(i>=hints.length)clearInterval(qt);
   },1200);
 }
-function capturePhoto(){
-  if(qualityTimer)clearInterval(qualityTimer);
-  stopCamera();
-  analyzeReceipt();
-}
-function handleFileUpload(e){
-  const file=e.target.files[0];
-  if(!file)return;
-  stopCamera();
-  analyzeReceipt();
-}
+function capturePhoto(){if(qt)clearInterval(qt);stopCamera();analyzeReceipt()}
+function handleFileUpload(e){var f=e.target.files[0];if(!f)return;stopCamera();analyzeReceipt()}
 function analyzeReceipt(){
   document.getElementById('cam-wrap').style.display='none';
   document.querySelector('.camera-actions').style.display='none';
   document.getElementById('ai-analyzing').style.display='block';
-  setTimeout(()=>{
+  setTimeout(function(){
     document.getElementById('ai-analyzing').style.display='none';
-    fillReceiptAI();
+    fillAI();
     document.getElementById('receipt-form').classList.add('show');
   },2200);
 }
-function fillReceiptAI(){
-  const samples=[
-    {amount:'89.90',biz:'סופר-פארם',cat:'equipment'},
-    {amount:'145.00',biz:'מקדונלד'ס',cat:'food'},
-    {amount:'32.00',biz:'פז',cat:'parking'},
-    {amount:'280.00',biz:'Office Depot',cat:'equipment'},
-    {amount:'67.50',biz:'קפה גרג',cat:'food'},
+function fillAI(){
+  var s=[
+    {a:'89.90',b:'\u05e1\u05d5\u05e4\u05e8-\u05e4\u05d0\u05e8\u05dd',c:'equipment'},
+    {a:'145.00',b:'McDonald's',c:'food'},
+    {a:'32.00',b:'\u05e4\u05d6',c:'parking'},
+    {a:'280.00',b:'Office Depot',c:'equipment'},
+    {a:'67.50',b:'\u05e7\u05e4\u05d4 \u05d2\u05e8\u05d2',c:'food'}
   ];
-  const s=samples[Math.floor(Math.random()*samples.length)];
-  document.getElementById('r-amount').value=s.amount;
+  var r=s[Math.floor(Math.random()*s.length)];
+  document.getElementById('r-amount').value=r.a;
   document.getElementById('r-date').value=today();
   document.getElementById('r-time').value=nowTime();
-  document.getElementById('r-biz').value=s.biz;
-  document.getElementById('r-cat').value=s.cat;
+  document.getElementById('r-biz').value=r.b;
+  document.getElementById('r-cat').value=r.c;
   manualEdited=false;
   document.getElementById('manual-tag').style.display='none';
 }
 function markManual(){
-  if(!manualEdited){manualEdited=true;document.getElementById('manual-tag').style.display='inline-block';}
+  if(!manualEdited){manualEdited=true;document.getElementById('manual-tag').style.display='inline-block'}
 }
-function setType(type,_){
+function setType(type){
   expenseType=type;
-  ['petty','personal','card'].forEach(t=>{
-    document.getElementById('t-'+t)?.classList.toggle('active',t===type);
+  ['petty','personal','card'].forEach(function(t){
+    var el=document.getElementById('t-'+t);
+    if(el)el.classList.toggle('active',t===type);
   });
 }
 function submitReceipt(){
-  const amount=document.getElementById('r-amount').value;
-  const biz=document.getElementById('r-biz').value;
-  if(!amount||!biz){toast('נא למלא סכום ושם עסק','err');return}
-  const typeLabel={petty:'קופה קטנה',personal:'החזר אישי',card:'כרטיס עמותה'}[expenseType];
-  toast('✅ קבלה נשלחה לאישור! ₪'+amount+' — '+biz+' ('+typeLabel+')','ok');
+  var amount=document.getElementById('r-amount').value;
+  var biz=document.getElementById('r-biz').value;
+  if(!amount||!biz){toast('\u05e0\u05d0 \u05dc\u05de\u05dc\u05d0 \u05e1\u05db\u05d5\u05dd \u05d5\u05e9\u05dd \u05e2\u05e1\u05e7','err');return}
+  var tl={'petty':'\u05e7\u05d5\u05e4\u05d4 \u05e7\u05d8\u05e0\u05d4','personal':'\u05d4\u05d7\u05d6\u05e8 \u05d0\u05d9\u05e9\u05d9','card':'\u05db\u05e8\u05d8\u05d9\u05e1 \u05e2\u05de\u05d5\u05ea\u05d4'};
+  toast('\u2705 \u05e0\u05e9\u05dc\u05d7! \u20aa'+amount+' - '+biz+' ('+tl[expenseType]+')','ok');
   closeCam();
 }
-
-// ---- SESSION ----
 async function init(){
   document.getElementById('loading').style.display='flex';
   try{
-    const{data:{session}}=await sb.auth.getSession();
+    var r=await sb.auth.getSession();
+    var session=r.data.session;
     if(session){
-      const{data:prof}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
-      if(prof){CU=session.user;CP=prof;VR=prof.role;initApp();document.getElementById('app').style.display='block';}
+      var pr=await sb.from('profiles').select('*').eq('id',session.user.id).single();
+      if(pr.data){CU=session.user;CP=pr.data;VR=pr.data.role;initApp();document.getElementById('app').style.display='block';}
       else showLogin();
     }else showLogin();
   }catch(e){showLogin();}
   finally{document.getElementById('loading').style.display='none';}
 }
 function showLogin(){document.getElementById('login-screen').style.display='flex';}
-// load saved AI key
-const savedKey=localStorage.getItem('oai_key');
-if(savedKey){const k=document.getElementById('ai-key');if(k)k.value=savedKey;}
+var sk=localStorage.getItem('oai_key');
+if(sk){var kEl=document.getElementById('ai-key');if(kEl)kEl.value=sk;}
 init();
+
+</body>
+</html>
 </script>
 </body>
 </html>
