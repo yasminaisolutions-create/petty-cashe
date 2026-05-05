@@ -1,823 +1,1381 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-<meta charset="UTF-8">
+<html lang="he" dir="rtl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PettyCash AI</title>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--green:#16a34a;--yellow:#d97706;--red:#dc2626;--blue:#2563eb;--purple:#7c3aed;--bg:#f0fdf4;--card:#ffffff;--text:#1a2e1a;--border:#d1fae5;--accent:#059669}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
-#loading{position:fixed;inset:0;background:linear-gradient(135deg,#EFF6FF,#F0FDF4);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
-.logo-big{font-size:48px;font-weight:900;color:var(--accent);margin-bottom:8px}
-.logo-big span{color:var(--purple)}
-.spinner{width:40px;height:40px;border:4px solid #d1fae5;border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-top:20px}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes slideIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
-#toast-container{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:8px}
-.toast{padding:12px 20px;border-radius:10px;font-weight:600;font-size:14px;animation:slideIn .3s ease;text-align:center}
-.toast.ok{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7}
-.toast.err{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
-.toast.info{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
-#login-screen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px}
-.login-box{background:var(--card);border-radius:20px;padding:32px;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(0,0,0,0.08)}
-.login-logo{text-align:center;margin-bottom:24px}
-.login-logo .name{font-size:28px;font-weight:900;color:var(--accent)}
-.login-logo .name span{color:var(--purple)}
-.login-logo .sub{font-size:13px;color:#6b7280;margin-top:4px}
-.form-group{margin-bottom:16px}
-.form-group label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
-.form-group input,.form-group select{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:'Heebo',sans-serif;background:#fff;transition:border-color .2s}
-.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--accent)}
-.btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;transition:all .2s}
-.btn-primary{background:linear-gradient(135deg,var(--accent),#047857);color:#fff}
-.btn-primary:hover{opacity:0.9;transform:translateY(-1px)}
-.btn-secondary{background:#f3f4f6;color:#374151;margin-top:8px}
-.demo-cards{margin-top:24px}
-.demo-title{font-size:12px;font-weight:700;color:#9ca3af;text-align:center;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
-.dc{background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px}
-.dc:hover{border-color:var(--accent);background:#f0fdf4}
-.dc-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
-.dc .dc-name{font-weight:700;font-size:14px}
-.dc .dc-role{font-size:12px;color:#6b7280}
-#app{display:none;flex-direction:column;min-height:100vh}
-.topbar{background:linear-gradient(135deg,var(--accent),#047857);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
-.topbar-title{font-size:18px;font-weight:700}
-.topbar-user{font-size:13px;opacity:0.9;cursor:pointer}
-.admin-bar{background:#7c3aed;color:#fff;padding:8px 20px;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.admin-bar span{font-weight:600}
-.view-btn{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;cursor:pointer;font-family:'Heebo',sans-serif}
-.view-btn.active{background:#fff;color:#7c3aed;font-weight:700}
-.nav-tabs{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;padding:0 12px}
-.nav-tab{padding:12px 16px;font-size:14px;font-weight:600;color:#6b7280;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .2s}
-.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-.page{display:none;padding:16px;max-width:600px;margin:0 auto;width:100%}
-.page.active{display:block}
-.page-title{font-size:20px;font-weight:800;color:var(--text);margin-bottom:16px}
-.card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1px solid var(--border)}
-.card-title{font-size:15px;font-weight:700;margin-bottom:12px;color:var(--text)}
-.stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6}
-.stat-row:last-child{border-bottom:none}
-.stat-label{font-size:14px;color:#6b7280}
-.stat-value{font-size:14px;font-weight:700;color:var(--text)}
-.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
-.badge-green{background:#d1fae5;color:#065f46}
-.badge-yellow{background:#fef3c7;color:#92400e}
-.badge-red{background:#fee2e2;color:#991b1b}
-.badge-blue{background:#dbeafe;color:#1e40af}
-.expense-item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f9fafb;border-radius:10px;margin-bottom:8px;border:1px solid #e5e7eb}
-.expense-info .title{font-size:14px;font-weight:700}
-.expense-info .sub{font-size:12px;color:#6b7280;margin-top:2px}
-.expense-amount{font-size:16px;font-weight:800;color:var(--text)}
-.traffic{font-size:18px}
-.btn-sm{padding:7px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Heebo',sans-serif;transition:all .2s}
-.btn-approve{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7}
-.btn-reject{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5}
-.btn-scan{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;padding:14px 20px;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;width:100%;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 12px rgba(37,99,235,0.3)}
-.btn-scan:hover{opacity:0.9;transform:translateY(-1px)}
-#camera-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:5000;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-#camera-modal.open{display:flex}
-.camera-box{background:#000;border-radius:16px;overflow:hidden;width:100%;max-width:380px;position:relative}
-#camera-video{width:100%;display:block;max-height:320px;object-fit:cover}
-.camera-overlay{position:absolute;top:0;left:0;right:0;bottom:0;border:3px solid #22c55e;border-radius:16px;pointer-events:none}
-.quality-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#fff;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap}
-.quality-good{color:#22c55e}
-.quality-bad{color:#ef4444}
-.camera-actions{display:flex;gap:10px;margin-top:12px;width:100%;max-width:380px}
-.camera-actions .btn{flex:1;padding:12px}
-.ai-analyzing{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:6000;flex-direction:column;align-items:center;justify-content:center;color:#fff}
-.ai-analyzing.show{display:flex}
-.ai-spinner{width:60px;height:60px;border:5px solid rgba(255,255,255,0.2);border-top-color:#7c3aed;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:16px}
-.ai-text{font-size:18px;font-weight:700}
-.ai-sub{font-size:13px;opacity:0.7;margin-top:6px}
-#expense-form-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:4000;overflow-y:auto;padding:20px}
-#expense-form-modal.open{display:flex;align-items:flex-start;justify-content:center}
-.expense-form-box{background:#fff;border-radius:20px;padding:24px;width:100%;max-width:480px;margin-top:20px}
-.form-row{display:flex;gap:10px}
-.form-row .form-group{flex:1}
-.manual-tag{display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700}
-.progress-bar{background:#e5e7eb;border-radius:10px;height:12px;overflow:hidden;margin:8px 0}
-.progress-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--green),#22c55e);transition:width .5s}
-.progress-fill.warn{background:linear-gradient(90deg,var(--yellow),#f59e0b)}
-.progress-fill.danger{background:linear-gradient(90deg,var(--red),#ef4444)}
-.punch-section{background:#f0fdf4;border-radius:12px;padding:16px;margin-bottom:12px;text-align:center}
-.live-clock{font-size:36px;font-weight:900;color:var(--accent);font-variant-numeric:tabular-nums}
-.punch-status{font-size:13px;color:#6b7280;margin:6px 0 12px}
-.punch-out{background:var(--danger-lt);color:#991b1b}
-.punch-in{background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7}
-.punch-out-btn{background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5}
-.hours-log{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid #f3f4f6}
-.finance-stream{border-right:4px solid var(--accent);padding-right:12px;margin-bottom:12px}
-.finance-stream.yellow{border-right-color:var(--yellow)}
-.finance-stream.blue{border-right-color:var(--blue)}
-.stream-title{font-size:13px;font-weight:700;color:#6b7280;margin-bottom:4px}
-.stream-amount{font-size:22px;font-weight:900;color:var(--text)}
-.project-card{background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:10px}
-.project-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.project-name{font-size:15px;font-weight:700}
-.user-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px}
-.user-row:last-child{border-bottom:none}
+*,::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F2F7FC;--white:#FFFFFF;
+  --blue:#3A8FC8;--blue-lt:#EAF4FC;--blue-mid:#C8E0F4;--blue-dk:#2270A8;
+  --teal:#2BBFA0;--teal-lt:#E6F7F4;
+  --text:#1C2B3A;--muted:#7090A8;
+  --border:#D6E4EF;--border2:#BFCFDC;
+  --ok:#18A270;--ok-lt:#E6F5EF;
+  --warn:#E07A20;--warn-lt:#FEF3E8;
+  --danger:#D03050;--danger-lt:#FDEDF0;
+  --flag:#C8500A;--flag-lt:#FDF0E6;--flag-border:rgba(200,80,10,.28);
+  --purple:#7B5EA7;--purple-lt:#F0EBF8;
+  --sh:0 2px 12px rgba(40,80,120,.08);--sh2:0 4px 24px rgba(40,80,120,.13);
+  --r:14px;--rsm:8px;--rxs:6px;
+  --mono:'DM Mono',monospace;--body:'Heebo',sans-serif;
+}
+body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;overflow-x:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 26px;height:54px;background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:9px}
+.lmark{width:29px;height:29px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:#fff}
+.lname{font-size:15px;font-weight:900}.lname span{color:var(--blue)}
+.tbr{display:flex;align-items:center;gap:8px}
+.uchip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;background:var(--bg);border:1px solid var(--border);font-size:12px;font-weight:600}
+.uon{width:6px;height:6px;border-radius:50%;background:var(--teal)}
+.bout{padding:5px 12px;border-radius:20px;background:var(--warn-lt);color:var(--warn);border:1px solid rgba(224,122,32,.25);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.bout:hover{background:rgba(224,122,32,.18)}
+/* ADMIN SWITCHER BAR */
+.role-bar{display:none;align-items:center;justify-content:center;gap:6px;padding:8px 16px;background:#1C2B3A;border-bottom:1px solid #2A3F55;flex-wrap:wrap}
+.role-bar.show{display:flex}
+.role-bar-label{font-size:11px;color:rgba(255,255,255,.5);font-weight:600;margin-left:8px}
+.rbtn{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.15);background:transparent;font-family:var(--body)}
+.rbtn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.rbtn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+#sbar{display:none;align-items:center;justify-content:center;padding:8px 0;border-bottom:1px solid var(--border);background:var(--white)}
+.sc2{width:23px;height:23px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--muted);transition:all .3s}
+.sc2.done{background:var(--teal-lt);border-color:var(--teal);color:var(--teal)}
+.sc2.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.sl2{font-size:10px;color:var(--muted);margin:0 7px;white-space:nowrap}.sl2.active{color:var(--text);font-weight:600}
+.scon2{width:24px;height:1px;background:var(--border);flex-shrink:0;transition:background .3s}.scon2.done{background:var(--teal)}
+.screen{display:none}.screen.active{display:block}
+#sl{display:flex;align-items:center;justify-content:center;padding:36px 16px;min-height:100vh}
+.lw{width:100%;max-width:380px}
+.lcard{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:32px;box-shadow:var(--sh2)}
+.l-lg{width:50px;height:50px;background:var(--blue);border-radius:14px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;color:#fff;box-shadow:0 5px 15px rgba(58,143,200,.25)}
+.lcard h1{font-size:20px;font-weight:900;text-align:center;margin-bottom:3px}
+.lcard .sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:24px}
+.fld{margin-bottom:13px}
+.flbl{display:block;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:5px}
+.fi{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);font-family:var(--body);font-size:13px;transition:all .2s;outline:none;direction:rtl}
+.fi:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(58,143,200,.1);background:var(--white)}
+.pw{position:relative}.pw .fi{padding-left:36px}
+.peye{position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted)}
+.lerr{display:none;background:var(--danger-lt);border:1px solid rgba(208,48,80,.2);border-radius:var(--rxs);padding:8px 12px;margin-bottom:11px;font-size:12px;color:var(--danger);text-align:center}
+.btnm{width:100%;padding:12px;border-radius:var(--rsm);background:var(--blue);color:#fff;font-family:var(--body);font-weight:900;font-size:14px;border:none;cursor:pointer;transition:all .2s;box-shadow:0 4px 12px rgba(58,143,200,.28)}
+.btnm:hover{background:var(--blue-dk);transform:translateY(-1px)}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.shake{animation:shake .4s ease}
+.panel{display:none;padding:22px 26px;max-width:900px;margin:0 auto;animation:fadein .3s ease;overflow-x:hidden}
+.panel.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.ptag{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:15px}
+.pt-blue{background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue-mid)}
+.pt-teal{background:var(--teal-lt);color:var(--teal);border:1px solid rgba(43,191,160,.3)}
+.pt-green{background:var(--ok-lt);color:var(--ok);border:1px solid rgba(24,162,112,.25)}
+.pt-purple{background:var(--purple-lt);color:var(--purple);border:1px solid rgba(123,94,167,.25)}
+.ptag-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.ptitle{font-size:20px;font-weight:900;margin-bottom:3px}
+.psub{font-size:12px;color:var(--muted);margin-bottom:18px}
+.srow{display:grid;gap:10px;margin-bottom:16px}
+.s3{grid-template-columns:repeat(3,1fr)}.s4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:760px){.s4{grid-template-columns:repeat(2,1fr)}.s3{grid-template-columns:repeat(3,1fr)}}
+.scard{background:var(--white);border:1px solid var(--border);border-radius:var(--rsm);padding:13px 15px}
+.slbl{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px}
+.sval{font-family:var(--mono);font-size:22px;font-weight:500}
+.sval.b{color:var(--blue)}.sval.g{color:var(--ok)}.sval.w{color:var(--warn)}.sval.r{color:var(--flag)}.sval.p{color:var(--purple)}
+.ssub{font-size:10px;color:var(--muted);margin-top:2px}
+.pbar{background:var(--white);border:1px solid var(--border);border-radius:var(--rsm);padding:14px 16px;margin-bottom:14px}
+.pbt{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px}
+.pbamt{font-family:var(--mono);font-size:23px;font-weight:500}
+.pbr{text-align:left;font-size:12px;color:var(--muted)}
+.ptrack{height:7px;background:var(--bg);border-radius:4px;border:1px solid var(--border);overflow:hidden}
+.pfill{height:100%;border-radius:4px;transition:width .7s ease}
+.pmeta{display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--muted)}
+.palert{display:none;margin-top:10px;padding:10px 14px;background:var(--warn-lt);border:1px solid rgba(224,122,32,.25);border-radius:var(--rsm);align-items:center;justify-content:space-between;gap:10px}
+.palert.show{display:flex}
+.bsend{padding:8px 14px;border-radius:var(--rxs);background:var(--warn);color:#fff;border:none;font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px}
+.tab{padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab:hover{color:var(--text)}.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tbdg{display:inline-block;padding:1px 6px;border-radius:20px;font-size:9px;background:var(--warn-lt);color:var(--warn);margin-right:5px;font-weight:700}
+.cc{background:var(--white);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;transition:box-shadow .2s}
+.cc:hover{box-shadow:var(--sh)}
+.cch{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;cursor:pointer;user-select:none}
+.ccl{display:flex;align-items:center;gap:10px}
+.ccav{width:35px;height:35px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0}
+.ccname{font-size:13px;font-weight:700}.ccmeta{font-size:10px;color:var(--muted);margin-top:1px}
+.ccr{display:flex;align-items:center;gap:8px}
+.cctot{font-family:var(--mono);font-size:13px;font-weight:500}
+.pc{padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700}
+.pc-pend{background:var(--warn-lt);color:var(--warn)}.pc-ok{background:var(--ok-lt);color:var(--ok)}.pc-flag{background:var(--flag-lt);color:var(--flag);border:1px solid var(--flag-border)}
+.chev{font-size:10px;color:var(--muted);transition:transform .25s}
+.cc.open .chev{transform:rotate(180deg)}
+.ccbody{display:none;border-top:1px solid var(--border)}.cc.open .ccbody{display:block}
+.rrow{display:flex;align-items:center;justify-content:space-between;padding:10px 15px;border-bottom:1px solid var(--bg);transition:background .15s;position:relative}
+.rrow:last-child{border-bottom:none}.rrow:hover{background:var(--bg)}.rrow.done{opacity:.5}
+.rrow.flagged{border-right:3px solid var(--flag);background:var(--flag-lt)}
+.rrow.flagged:hover{background:#FDEBD5}
+.rrl{display:flex;align-items:center;gap:8px}
+.rico{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.rn{font-size:12px;font-weight:700}
+.rmeta{font-size:10px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:5px}
+.flag-pill{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:20px;font-size:9px;font-weight:700;background:var(--flag-lt);color:var(--flag);border:1px solid var(--flag-border)}
+.rrr{display:flex;align-items:center;gap:7px}
+.ramt{font-family:var(--mono);font-size:13px;font-weight:500}
+.tbdg2{padding:2px 7px;border-radius:20px;font-size:9px;font-weight:700}
+.tp{background:var(--blue-lt);color:var(--blue)}.tr{background:var(--warn-lt);color:var(--warn)}.tk{background:var(--teal-lt);color:var(--teal)}
+.rlnk{font-size:18px;cursor:pointer;transition:transform .15s;line-height:1}.rlnk:hover{transform:scale(1.2)}
+.bok2{padding:6px 12px;border-radius:var(--rxs);background:var(--ok-lt);color:var(--ok);border:1px solid rgba(24,162,112,.25);font-family:var(--body);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
+.bok2:hover{background:rgba(24,162,112,.2)}
+.okcheck{color:var(--ok);font-size:14px}
+.action-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:14px}
+@media(max-width:500px){.action-bar{grid-template-columns:1fr}}
+.action-btn{padding:11px;border-radius:var(--rsm);border:1.5px solid var(--blue-mid);background:var(--blue-lt);color:var(--blue-dk);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px}
+.action-btn:hover{background:var(--blue-mid)}.action-btn.km{border-color:rgba(43,191,160,.35);background:var(--teal-lt);color:#1A7060}
+.action-btn.km:hover{background:rgba(43,191,160,.2)}
+.action-btn.hrs{border-color:rgba(123,94,167,.35);background:var(--purple-lt);color:#5B3E8A}
+.action-btn.hrs:hover{background:rgba(123,94,167,.2)}
+.tm{display:flex;align-items:center;justify-content:space-between;background:var(--white);border:1px solid var(--border);border-radius:var(--rsm);padding:11px 14px;margin-bottom:7px}
+.tm.off{opacity:.5}
+.tml{display:flex;align-items:center;gap:10px}
+.tmav{width:33px;height:33px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0}
+.av-on{background:var(--blue-lt);color:var(--blue)}.av-off{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.tmname{font-size:13px;font-weight:700}.tmrole{font-size:10px;color:var(--muted);margin-top:1px}.tmemail{font-size:9px;color:var(--muted);font-family:var(--mono);margin-top:1px;direction:ltr;text-align:right}
+.tmr{display:flex;align-items:center;gap:8px}
+.sb{padding:2px 7px;border-radius:20px;font-size:9px;font-weight:700}
+.sb-on{background:var(--ok-lt);color:var(--ok)}.sb-off{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.tog{position:relative;width:34px;height:19px;cursor:pointer}
+.tog input{opacity:0;width:0;height:0;position:absolute}
+.tt{position:absolute;inset:0;border-radius:10px;background:var(--border2);transition:all .25s}
+.tog input:checked+.tt{background:var(--teal)}
+.tth{position:absolute;top:2.5px;right:2.5px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:all .25s}
+.tog input:checked~.tth{right:auto;left:2.5px}
+.btnadd{padding:6px 13px;border-radius:20px;background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue-mid);font-family:var(--body);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s}
+.btnadd:hover{background:var(--blue-mid)}
+.afrm{background:var(--white);border:1px solid var(--blue-mid);border-radius:var(--rsm);padding:15px;margin-top:9px;display:none;animation:fadein .25s}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px}
+.btncfm{padding:9px;border-radius:var(--rxs);background:var(--blue);color:#fff;border:none;font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;flex:1}
+.btncnl{padding:9px 12px;border-radius:var(--rxs);background:var(--bg);color:var(--muted);border:1px solid var(--border);font-family:var(--body);font-size:12px;cursor:pointer}
+.phone-wrap{display:flex;justify-content:center;padding:5px 0 12px}
+.phone{width:262px;background:var(--white);border:2px solid var(--border2);border-radius:31px;overflow:hidden;box-shadow:0 14px 40px rgba(40,80,120,.13)}
+.pn{width:62px;height:15px;background:var(--bg);border-radius:0 0 9px 9px;margin:0 auto}
+.ph2{background:var(--blue);padding:11px 12px 14px;color:#fff}
+.phr{display:flex;justify-content:space-between;align-items:center;margin-bottom:1px}
+.phname{font-size:13px;font-weight:900}.phprog{font-size:9px;opacity:.75}
+.wg{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 8px 0}
+.wc{background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);padding:9px 8px}
+.wlbl{font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px}
+.wlbl.t{color:var(--teal)}.wlbl.b{color:var(--blue)}
+.wamt{font-family:var(--mono);font-size:16px;font-weight:500}
+.whint{font-size:7px;color:var(--muted);margin-top:1px}
+.phsec{padding:8px 8px 4px;font-size:8px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;display:flex;justify-content:space-between}
+.phsec a{color:var(--blue);cursor:pointer}
+.elist{padding:0 8px;display:flex;flex-direction:column;gap:4px}
+.ei{background:var(--bg);border:1px solid var(--border);border-radius:var(--rxs);padding:8px;display:flex;justify-content:space-between;align-items:center}
+.ei.flag-ei{background:var(--flag-lt);border-color:var(--flag-border);border-right:2px solid var(--flag)}
+.ei-l{display:flex;align-items:center;gap:6px}
+.ei-ico{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.ei-n{font-size:10px;font-weight:700}.ei-m{font-size:8px;color:var(--muted);margin-top:1px}
+.ei-r{text-align:left}
+.ei-a{font-family:var(--mono);font-size:10px;font-weight:500}
+.bdg{display:inline-block;padding:1px 5px;border-radius:20px;font-size:7px;font-weight:700;margin-top:1px}
+.bok{background:var(--ok-lt);color:var(--ok)}.bpd{background:var(--warn-lt);color:var(--warn)}.bnw{background:var(--blue-lt);color:var(--blue)}
+.bflag{background:var(--flag-lt);color:var(--flag)}
+.pfab{padding:8px}
+.fab-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.fab-btn{padding:9px 6px;border:none;border-radius:10px;font-family:var(--body);font-size:11px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .2s}
+.fab-scan{background:var(--blue);color:#fff;box-shadow:0 3px 10px rgba(58,143,200,.28)}
+.fab-scan:hover{background:var(--blue-dk)}
+.fab-km{background:var(--teal-lt);color:#1A7060;border:1.5px solid rgba(43,191,160,.35)}
+.fab-km:hover{background:rgba(43,191,160,.2)}
+.fab-hrs{background:var(--purple-lt);color:#5B3E8A;border:1.5px solid rgba(123,94,167,.35)}
+.fab-hrs:hover{background:rgba(123,94,167,.2)}
+.fin-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.fin-tabs::-webkit-scrollbar{height:0}
+.ftab{padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0}
+.ftab:hover{color:var(--text)}.ftab.active{border-bottom-color:var(--blue);color:var(--blue)}
+.ftab.f-flag.active{border-bottom-color:var(--flag);color:var(--flag)}
+.ftab.f-salary.active{border-bottom-color:var(--purple);color:var(--purple)}
+.cnt{padding:1px 6px;border-radius:20px;font-size:9px;font-weight:700}
+.cnt-b{background:var(--blue-lt);color:var(--blue)}.cnt-r{background:var(--flag-lt);color:var(--flag);border:1px solid var(--flag-border)}.cnt-p{background:var(--purple-lt);color:var(--purple)}.cnt-w{background:var(--warn-lt);color:var(--warn)}
+.dbtop{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--text);border-radius:var(--rsm) var(--rsm) 0 0}
+.dtls{display:flex;gap:4px}
+.dt{width:9px;height:9px;border-radius:50%}
+.dblbl{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.32)}
+.ftw{background:var(--white);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--rsm) var(--rsm);overflow-x:auto;margin-bottom:11px}
+.ft{width:100%;border-collapse:collapse;direction:rtl;min-width:520px}
+.ft th{padding:8px 12px;text-align:right;font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg)}
+.ft td{padding:9px 12px;font-size:11px;border-bottom:1px solid var(--border)}
+.ft tbody tr:last-child td{border-bottom:none}
+.ft tbody tr:hover{background:var(--bg)}
+.ft tbody tr.frow{background:var(--flag-lt)!important;border-right:3px solid var(--flag)}
+.ft tbody tr.frow td{color:var(--text)}
+.mono{font-family:var(--mono);font-weight:500;direction:ltr;text-align:left;display:inline-block}
+.rlnk2{font-size:17px;cursor:pointer;transition:transform .15s}.rlnk2:hover{transform:scale(1.2)}
+.flog{background:var(--text);border-radius:var(--rsm);padding:12px;font-family:var(--mono);font-size:10px;line-height:1.7;max-height:130px;overflow-y:auto;overflow-x:hidden;direction:ltr;text-align:left;}
+.lt{color:#2BBFA0}.lb{color:#7AC0F4}.lw2{color:#E8A84A}.lm{color:rgba(255,255,255,.3)}.lg{color:#4ADE80}.lf{color:#FF9060}
+.lcur{display:inline-block;width:7px;height:11px;background:#7AC0F4;opacity:.8;animation:blink .8s step-end infinite;vertical-align:middle}
+.rfcard{background:var(--warn-lt);border:1px solid rgba(224,122,32,.3);border-radius:var(--rsm);padding:13px 15px;margin-bottom:12px;display:none}
+.rfcard.show{display:block}
+.rft{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px}
+.rfamt{font-family:var(--mono);font-size:19px;font-weight:500;color:var(--warn)}
+.btn-rfok{padding:8px 16px;border-radius:var(--rxs);background:var(--warn);color:#fff;border:none;font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer}
+.rn2{animation:fb 2.5s ease-out forwards}
+.rs2{animation:fg 2.5s ease-out forwards}
+.rfl{animation:ffl 2.5s ease-out forwards}
+@keyframes fb{0%{background:rgba(58,143,200,.14)}100%{background:transparent}}
+@keyframes fg{0%{background:rgba(43,191,160,.12)}100%{background:transparent}}
+@keyframes ffl{0%{background:rgba(200,80,10,.16)}100%{background:var(--flag-lt)}}
+/* HOURS OVERLAY */
+#hrsov{position:fixed;inset:0;z-index:300;background:rgba(28,43,58,.52);backdrop-filter:blur(5px);display:none;align-items:flex-end;justify-content:center}
+#hrsov.open{display:flex}
+.hrs-sheet{width:100%;max-width:420px;background:var(--white);border-radius:21px 21px 0 0;padding:20px;border:1px solid var(--border);border-bottom:none;box-shadow:0 -5px 30px rgba(40,80,120,.13);animation:su .35s cubic-bezier(.16,1,.3,1)}
+.hrs-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px}
+.hrs-tab{padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.hrs-tab.active{color:var(--purple);border-bottom-color:var(--purple)}
+.hrs-calc{background:var(--purple-lt);border:1px solid rgba(123,94,167,.3);border-radius:var(--rsm);padding:12px;text-align:center;margin-bottom:14px;display:none}
+.hrs-calc.show{display:block}
+.hrs-calc-amt{font-family:var(--mono);font-size:24px;font-weight:500;color:var(--purple)}
+.hrs-calc-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.abs-types{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--border);border-radius:var(--rxs);overflow:hidden;margin-bottom:12px}
+.abs-type{padding:9px 4px;text-align:center;cursor:pointer;font-size:11px;font-weight:700;color:var(--muted);transition:all .15s}
+.abs-type:hover{background:var(--bg)}.abs-type.sel{background:var(--purple-lt);color:var(--purple)}
+/* SCANNER */
+#scanov{position:fixed;inset:0;z-index:300;background:rgba(28,43,58,.52);backdrop-filter:blur(5px);display:none;align-items:flex-end;justify-content:center}
+#scanov.open{display:flex}
+.ss{width:100%;max-width:400px;background:var(--white);border-radius:21px 21px 0 0;padding:20px;border:1px solid var(--border);border-bottom:none;box-shadow:0 -5px 30px rgba(40,80,120,.13);animation:su .35s cubic-bezier(.16,1,.3,1)}
+@keyframes su{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.sh2{width:33px;height:3px;background:var(--border);border-radius:2px;margin:0 auto 14px}
+.st{font-size:16px;font-weight:900;text-align:center;margin-bottom:3px}
+.ssb{font-size:11px;color:var(--muted);text-align:center;margin-bottom:13px;display:flex;align-items:center;justify-content:center;gap:5px}
+.rbox{width:100%;height:95px;background:var(--bg);border:1.5px dashed var(--blue-mid);border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;margin-bottom:13px}
+.sln{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--blue),transparent);box-shadow:0 0 8px var(--blue);top:0;animation:smv 1.8s linear infinite}
+@keyframes smv{0%{top:0}100%{top:100%}}
+.aform{display:none}
+.afl{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.conf-ok{padding:2px 6px;border-radius:20px;font-size:8px;font-weight:700;background:var(--ok-lt);color:var(--ok)}
+.conf-lo{padding:2px 6px;border-radius:20px;font-size:8px;font-weight:700;background:var(--flag-lt);color:var(--flag);border:1px solid var(--flag-border)}
+.conf-mid{padding:2px 6px;border-radius:20px;font-size:8px;font-weight:700;background:var(--warn-lt);color:var(--warn)}
+.ai{width:100%;padding:9px 11px;background:var(--bg);border:1px solid var(--border);border-radius:var(--rxs);color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:all .2s;direction:rtl}
+.ai:focus{border-color:var(--blue);background:var(--white)}
+.ai.lc{border-color:var(--flag-border);background:var(--flag-lt)}
+.g2a{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
+.fg2{margin-bottom:8px}
+.rt{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--border);border-radius:var(--rxs);overflow:hidden;margin-bottom:10px}
+.ro{padding:8px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:700;color:var(--muted);transition:all .15s}
+.ro:hover{background:var(--bg);color:var(--text)}.ro.sel{background:var(--blue-lt);color:var(--blue)}
+.flag-warn{display:none;background:var(--flag-lt);border:1.5px solid var(--flag-border);border-radius:var(--rsm);padding:10px 13px;margin-bottom:10px}
+.flag-warn.show{display:block}
+.fw-title{font-size:12px;font-weight:700;color:var(--flag);margin-bottom:3px}
+.fw-items{font-size:11px;color:var(--flag);list-style:none;display:flex;flex-direction:column;gap:2px}
+.fw-note{font-size:10px;color:var(--muted);margin-top:5px}
+.btn-sub{width:100%;padding:11px;border-radius:var(--rxs);color:#fff;font-family:var(--body);font-weight:900;font-size:13px;border:none;cursor:pointer;transition:all .2s}
+.btn-sub.normal{background:var(--blue);box-shadow:0 3px 10px rgba(58,143,200,.25)}
+.btn-sub.normal:hover{background:var(--blue-dk)}
+.btn-sub.flagged-sub{background:var(--flag)}
+.btn-sub.flagged-sub:hover{opacity:.9}
+.btn-sub.hrs-sub{background:var(--purple);box-shadow:0 3px 10px rgba(123,94,167,.25)}
+.btn-sub.hrs-sub:hover{opacity:.9}
+.btn-cnc{width:100%;padding:6px;background:none;border:none;color:var(--muted);font-family:var(--body);font-size:11px;cursor:pointer;margin-top:4px}
+#kmov{position:fixed;inset:0;z-index:300;background:rgba(28,43,58,.52);backdrop-filter:blur(5px);display:none;align-items:flex-end;justify-content:center}
+#kmov.open{display:flex}
+.km-sheet{width:100%;max-width:380px;background:var(--white);border-radius:21px 21px 0 0;padding:20px;border:1px solid var(--border);border-bottom:none;box-shadow:0 -5px 30px rgba(40,80,120,.13);animation:su .35s cubic-bezier(.16,1,.3,1)}
+.km-rate{font-size:11px;color:var(--muted);text-align:center;margin-bottom:14px}
+.km-calc{background:var(--teal-lt);border:1px solid rgba(43,191,160,.3);border-radius:var(--rsm);padding:12px;text-align:center;margin-bottom:14px;display:none}
+.km-calc.show{display:block}
+.km-calc-amt{font-family:var(--mono);font-size:24px;font-weight:500;color:var(--teal)}
+.km-calc-sub{font-size:11px;color:var(--muted);margin-top:2px}
+#recov{position:fixed;inset:0;z-index:400;background:rgba(28,43,58,.6);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
+#recov.open{display:flex}
+.rec-modal{background:var(--white);border-radius:var(--r);padding:24px;width:100%;max-width:380px;box-shadow:var(--sh2);animation:fadein .3s ease}
+.rec-modal-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.rec-title{font-size:16px;font-weight:900}
+.rec-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1;padding:0}
+.rec-paper{background:#FFFEF8;border:1px solid #E8E2C8;border-radius:var(--rsm);padding:16px;font-family:var(--mono);font-size:11px;line-height:1.8;position:relative}
+.conf-badge{font-size:8px;padding:1px 5px;border-radius:20px;font-weight:700;margin-right:4px}
+.cb-ok{background:var(--ok-lt);color:var(--ok)}.cb-lo{background:var(--flag-lt);color:var(--flag);border:1px solid var(--flag-border)}.cb-mid{background:var(--warn-lt);color:var(--warn)}
+.rec-flag-banner{background:var(--flag-lt);border:1px solid var(--flag-border);border-radius:var(--rxs);padding:9px 12px;margin-top:12px}
+.rec-flag-title{font-size:12px;font-weight:700;color:var(--flag);margin-bottom:3px}
+.rec-flag-items{font-size:11px;color:var(--flag)}
+.dots{display:inline-flex;gap:3px;align-items:center}
+.dots span{width:4px;height:4px;border-radius:50%;background:var(--blue);animation:th .8s ease-in-out infinite}
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes th{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:#fff;border-radius:var(--rsm);padding:10px 18px;font-size:12px;font-weight:600;z-index:999;transition:transform .35s cubic-bezier(.16,1,.3,1);box-shadow:var(--sh2);white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.psub-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;transition:box-shadow .2s;cursor:pointer}
+.psub-card:hover{box-shadow:var(--sh)}
+.psub-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px}
+.psub-l{display:flex;align-items:center;gap:12px}
+.psub-prog{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.psub-title{font-size:13px;font-weight:700}
+.psub-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.psub-r{display:flex;align-items:center;gap:12px}
+.psub-total{font-family:var(--mono);font-size:19px;font-weight:500}
+.psub-status{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.pss-wait{background:var(--warn-lt);color:var(--warn)}
+.pss-ok{background:var(--ok-lt);color:var(--ok)}
+.psub-chevron{font-size:11px;color:var(--muted);transition:transform .25s}
+.psub-card.open .psub-chevron{transform:rotate(180deg)}
+.psub-body{display:none;border-top:1px solid var(--border)}
+.psub-card.open .psub-body{display:block}
+.rec-row2{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:1px solid var(--bg);transition:background .15s}
+.rec-row2:last-child{border-bottom:none}.rec-row2:hover{background:var(--bg)}
+.rec-row2.flagged2{background:var(--flag-lt);border-right:3px solid var(--flag)}
+.rec-l2{display:flex;align-items:center;gap:10px}
+.rec-date{font-family:var(--mono);font-size:11px;color:var(--muted);min-width:52px}
+.rec-cat-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.rec-vendor{font-size:12px;font-weight:700}
+.rec-cat{font-size:10px;color:var(--muted);margin-top:1px}
+.rec-r2{display:flex;align-items:center;gap:10px}
+.rec-amt2{font-family:var(--mono);font-size:14px;font-weight:500}
+.rec-scan{font-size:17px;cursor:pointer;transition:transform .15s}.rec-scan:hover{transform:scale(1.15)}
+.psub-footer{padding:10px 18px;background:var(--bg);border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.psub-footer-total{font-size:12px;color:var(--muted)}
+.psub-footer-total strong{font-family:var(--mono);color:var(--text);font-size:14px}
+.btn-approve-sub{padding:8px 18px;border-radius:var(--rxs);background:var(--ok);color:#fff;border:none;font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-approve-sub:hover{opacity:.9}.btn-approve-sub:disabled{opacity:.4;cursor:not-allowed}
+.emp-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;transition:box-shadow .2s;cursor:pointer}
+.emp-card:hover{box-shadow:var(--sh)}
+.emp-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 18px}
+.emp-l{display:flex;align-items:center;gap:11px}
+.emp-av{width:38px;height:38px;border-radius:11px;background:var(--blue-lt);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0}
+.emp-name{font-size:13px;font-weight:700}
+.emp-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.emp-r{display:flex;align-items:center;gap:12px}
+.emp-total{font-family:var(--mono);font-size:18px;font-weight:500;color:var(--purple)}
+.emp-body{display:none;border-top:1px solid var(--border)}
+.emp-card.open .emp-body{display:block}
+.emp-card.open .psub-chevron{transform:rotate(180deg)}
+.sal-item{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--bg)}
+.sal-item:last-child{border-bottom:none}.sal-item:hover{background:var(--bg)}
+.sal-l{display:flex;align-items:center;gap:9px}
+.sal-type{padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;white-space:nowrap}
+.sal-desc{font-size:12px;color:var(--text);margin-top:1px}
+.sal-r{display:flex;align-items:center;gap:10px}
+.sal-amt{font-family:var(--mono);font-size:13px;font-weight:500}
+.mgr-approved-badge{padding:2px 7px;border-radius:20px;font-size:9px;font-weight:700;background:var(--ok-lt);color:var(--ok)}
+.emp-footer{padding:10px 18px;background:var(--bg);border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.btn-payroll{padding:8px 18px;border-radius:var(--rxs);background:var(--purple);color:#fff;border:none;font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-payroll:hover{opacity:.9}.btn-payroll:disabled{opacity:.4;cursor:not-allowed}
+.flag-item{background:var(--white);border:1.5px solid var(--flag-border);border-radius:var(--rsm);padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.flag-info{flex:1}
+.flag-title{font-size:13px;font-weight:700;color:var(--text)}
+.flag-fields{font-size:11px;color:var(--flag);margin-top:3px}
+.flag-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.flag-r{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.flag-amt3{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--flag)}
+.export-bar{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.btn-export{padding:7px 12px;border-radius:var(--rxs);background:var(--white);border:1px solid var(--border);color:var(--muted);font-family:var(--body);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.btn-export:hover{border-color:var(--ok);color:var(--ok);background:var(--ok-lt)}
+.btn-export-all{background:var(--ok-lt);color:var(--ok);border-color:rgba(24,162,112,.3)}
+.btn-export-all:hover{background:rgba(24,162,112,.2)}
+@keyframes dl-flash{0%{transform:scale(1)}50%{transform:scale(.95)}100%{transform:scale(1)}}
+.dl-flash{animation:dl-flash .25s ease}
+.prog-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;transition:box-shadow .2s}
+.prog-card:hover{box-shadow:var(--sh)}
+.prog-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.prog-left{display:flex;align-items:center;gap:12px}
+.prog-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.prog-name{font-size:14px;font-weight:700}
+.prog-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.prog-right{display:flex;align-items:center;gap:10px}
+.prog-stat{text-align:center;padding:0 12px;border-right:1px solid var(--border)}
+.prog-stat:first-child{border-right:none}
+.prog-stat-val{font-family:var(--mono);font-size:16px;font-weight:500}
+.prog-stat-lbl{font-size:9px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;margin-top:2px}
+.prog-body{padding:14px 18px}
+.mgr-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bg)}
+.mgr-row:last-child{border-bottom:none}
+.mgr-l{display:flex;align-items:center;gap:10px}
+.mgr-av{width:34px;height:34px;border-radius:10px;background:var(--blue-lt);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0}
+.mgr-name{font-size:13px;font-weight:700}
+.mgr-role{font-size:10px;color:var(--muted);margin-top:1px}
+.mgr-email{font-size:9px;color:var(--muted);font-family:var(--mono);margin-top:1px;direction:ltr;text-align:right}
+.mgr-r{display:flex;align-items:center;gap:8px}
+.btn-remove{padding:5px 12px;border-radius:20px;background:var(--danger-lt);color:var(--danger);border:1px solid rgba(208,48,80,.2);font-family:var(--body);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-remove:hover{background:rgba(208,48,80,.15)}
+.prog-add-mgr{margin-top:12px;padding:10px 0 2px;border-top:1px solid var(--bg)}
+.btn-add-mgr{padding:7px 14px;border-radius:20px;background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue-mid);font-family:var(--body);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-add-mgr:hover{background:var(--blue-mid)}
+.add-mgr-form{background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);padding:14px;margin-top:10px;display:none;animation:fadein .25s}
+.org-overview{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+@media(max-width:700px){.org-overview{grid-template-columns:repeat(2,1fr)}}
+.ov-card{background:var(--white);border:1px solid var(--border);border-radius:var(--rsm);padding:13px 15px;text-align:center}
+.ov-val{font-family:var(--mono);font-size:26px;font-weight:500;color:var(--blue)}
+.ov-lbl{font-size:10px;color:var(--muted);margin-top:3px;font-weight:600}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.refund-q{margin-bottom:9px;border-radius:var(--rsm);overflow:hidden;}
+.rq-detected{padding:9px 12px;background:var(--ok-lt);border:1.5px solid rgba(24,162,112,.3);border-radius:var(--rsm);font-size:12px;font-weight:700;color:var(--ok);display:flex;align-items:center;gap:7px;}
+.rq-ask{padding:11px 13px;background:var(--blue-lt);border:1.5px solid var(--blue-mid);border-radius:var(--rsm);}
+.rq-label{font-size:12px;font-weight:800;color:var(--blue);margin-bottom:8px;}
+.rq-btns{display:flex;gap:7px;}
+.rq-btn{flex:1;padding:8px 10px;border-radius:var(--rxs);border:1.5px solid;font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;}
+.rq-yes{background:#fff;color:var(--ok);border-color:rgba(24,162,112,.4);}
+.rq-yes:hover,.rq-yes.sel{background:var(--ok);color:#fff;border-color:var(--ok);}
+.rq-no{background:#fff;color:var(--muted);border-color:var(--border2);}
+.rq-no:hover,.rq-no.sel{background:var(--muted);color:#fff;border-color:var(--muted);}
+.refund-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;}
+.rb-yes{background:#FFF0E6;color:var(--warn);border:1px solid rgba(224,122,32,.3);}
+.rb-no{background:var(--ok-lt);color:var(--ok);border:1px solid rgba(24,162,112,.25);}
+.rq-err{border-color:rgba(208,48,80,.5)!important;background:var(--danger-lt)!important;}
 </style>
 </head>
 <body>
+<!-- TOPBAR -->
+<nav class="topbar">
+  <div class="logo"><div class="lmark">AI</div><div class="lname">Petty<span>Cash</span></div></div>
+  <div class="tbr" id="tbr" style="display:none">
+    <div class="uchip"><div class="uon"></div><span id="tbname">—</span></div>
+    <button class="bout" onclick="doLogout()">&#x2190; יציאה</button>
+  </div>
+</nav>
 
-<!-- LOADING -->
-<div id="loading">
-  <div class="logo-big">PettyCash <span>AI</span></div>
-  <div style="font-size:13px;color:#6b7280;margin-top:4px">מערכת ניהול קופה קטנה</div>
-  <div class="spinner"></div>
+<!-- ROLE SWITCHER BAR (admin only) -->
+<div class="role-bar" id="role-bar">
+  <span class="role-bar-label">&#x1F441; צפייה כ:</span>
+  <button class="rbtn active" id="rbtn-coordinator" onclick="switchRole('coordinator')">&#x1F4F1; רכזת שטח</button>
+  <button class="rbtn" id="rbtn-manager" onclick="switchRole('manager')">&#x1F4CA; מנהלת</button>
+  <button class="rbtn" id="rbtn-finance" onclick="switchRole('finance')">&#x1F3E6; כספים</button>
+  <button class="rbtn" id="rbtn-admin" onclick="switchRole('admin')">&#x1F464; HR Admin</button>
 </div>
 
-<!-- TOAST -->
-<div id="toast-container"></div>
+<!-- STEP BAR -->
+<div id="sbar">
+  <div style="display:flex;align-items:center">
+    <div class="sc2 active" id="sc1">1</div><span class="sl2 active" id="sl1">סריקת קבלה</span>
+    <div class="scon2" id="con1"></div>
+    <div class="sc2" id="sc2">2</div><span class="sl2" id="sl2">אישור מנהלת</span>
+    <div class="scon2" id="con2"></div>
+    <div class="sc2" id="sc3">3</div><span class="sl2" id="sl3">סנכרון כספים</span>
+  </div>
+</div>
 
 <!-- LOGIN -->
-<div id="login-screen" style="display:none;min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px">
-  <div class="login-box">
-    <div class="login-logo">
-      <div class="name">PettyCash <span>AI</span></div>
-      <div class="sub">מערכת ניהול קופה קטנה לעמותות ועסקים</div>
-    </div>
-    <div class="form-group">
-      <label>אימייל</label>
-      <input type="email" id="login-email" placeholder="your@email.com">
-    </div>
-    <div class="form-group">
-      <label>סיסמה</label>
-      <input type="password" id="login-password" placeholder="••••••••">
-    </div>
-    <button class="btn btn-primary" onclick="doLogin()">כניסה למערכת</button>
-    <div class="demo-cards">
-      <div class="demo-title">כניסה מהירה לדמו</div>
-      <div class="dc" onclick="quickLogin('yasminko27@gmail.com','1234Yasmin!')">
-        <div class="dc-avatar" style="background:#d1fae5;color:#065f46">י</div>
-        <div><div class="dc-name">יסמין (בעלים)</div><div class="dc-role">אדמין | org_001</div></div>
-      </div>
-      <div class="dc" onclick="quickLogin('michal@pettycash.app','Test123456')">
-        <div class="dc-avatar" style="background:#dbeafe;color:#1e40af">מ</div>
-        <div><div class="dc-name">מיכל כהן</div><div class="dc-role">מנהלת פרויקט | org_001</div></div>
-      </div>
-      <div class="dc" onclick="quickLogin('dana@pettycash.app','Test123456')">
-        <div class="dc-avatar" style="background:#fce7f3;color:#9d174d">ד</div>
-        <div><div class="dc-name">דנה שמש</div><div class="dc-role">רכזת שטח | org_001</div></div>
-      </div>
-      <div class="dc" onclick="quickLogin('yossi@pettycash.app','Test123456')">
-        <div class="dc-avatar" style="background:#ede9fe;color:#5b21b6">י</div>
-        <div><div class="dc-name">יוסי לוי</div><div class="dc-role">כספים | org_001</div></div>
-      </div>
+<div id="screen-login" class="screen active" style="display:flex;align-items:center;justify-content:center;padding:36px 16px;min-height:100vh">
+  <div class="lw">
+    <div class="lcard" id="lcard">
+      <div class="l-lg">AI</div>
+      <h1>PettyCash AI</h1><p class="sub">מערכת חכמה לניהול הוצאות וקופה קטנה</p>
+      <div class="fld"><label class="flbl">אימייל</label><input type="email" id="lu" class="fi" placeholder="your@email.com" onkeydown="if(event.key==='Enter')document.getElementById('lp').focus()"></div>
+      <div class="fld" style="margin-bottom:18px"><label class="flbl">סיסמה</label><div class="pw"><input type="password" id="lp" class="fi" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" onkeydown="if(event.key==='Enter')doLogin()"><button class="peye" onclick="tpwd()">&#x1F441;</button></div></div>
+      <div class="lerr" id="lerr">&#x274C; אימייל או סיסמה שגויים</div>
+      <button class="btnm" onclick="doLogin()">כניסה למערכת &#x2190;</button>
     </div>
   </div>
 </div>
+
 <!-- APP -->
-<div id="app">
-
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div class="topbar-title">PettyCash <span style="color:#a7f3d0">AI</span></div>
-    <div class="topbar-user" id="topbar-user" onclick="showLogoutMenu()">טוען...</div>
-  </div>
-
-  <!-- ADMIN VIEW-AS BAR -->
-  <div class="admin-bar" id="admin-bar" style="display:none">
-    <span>תצוגה כ:</span>
-    <button class="view-btn" onclick="setViewAs('admin')" id="vbtn-admin">אדמין</button>
-    <button class="view-btn" onclick="setViewAs('manager')" id="vbtn-manager">מנהלת</button>
-    <button class="view-btn" onclick="setViewAs('field')" id="vbtn-field">עובד</button>
-    <button class="view-btn" onclick="setViewAs('finance')" id="vbtn-finance">כספים</button>
-  </div>
-
-  <!-- NAV TABS -->
-  <div class="nav-tabs" id="nav-tabs"></div>
-
-  <!-- PAGES CONTAINER -->
-  <div id="pages">
-
-    <!-- PAGE: הוצאות (field/all) -->
-    <div class="page" id="page-expenses">
-      <div class="page-title">הוצאות שלי</div>
-      <button class="btn-scan" onclick="openCamera()">
-        <span style="font-size:22px">📷</span>
-        <span>סרוק קבלה</span>
-        <span style="font-size:11px;opacity:0.8;font-weight:400">AI ממלא אוטומטית</span>
-      </button>
-      <div style="display:flex;gap:8px;margin-bottom:16px">
-        <button class="btn-sm btn-approve" style="flex:1" onclick="openManualForm('petty')">+ קופה קטנה</button>
-        <button class="btn-sm" style="flex:1;background:#ede9fe;color:#5b21b6;border:1.5px solid #c4b5fd" onclick="openManualForm('personal')">+ החזר אישי</button>
-        <button class="btn-sm" style="flex:1;background:#fce7f3;color:#9d174d;border:1.5px solid #f9a8d4" onclick="openManualForm('card')">+ כרטיס עמותה</button>
+<div id="screen-app" class="screen">
+<!-- COORDINATOR -->
+<div class="panel" id="panel-coordinator">
+  <div class="ptag pt-blue"><div class="ptag-dot"></div>ממשק רכזת שטח</div>
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="pn"></div>
+      <div class="ph2">
+        <div class="phr"><span class="phname" id="phonename">שלום דנה</span><span style="font-size:11px">&#x2699;&#xFE0F;</span></div>
+        <div class="phprog">תוכנית נוער בסיכון — רמת גן</div>
       </div>
-      <div id="my-expenses-list">
-        <div class="expense-item">
-          <div class="expense-info"><div class="title">סופר יהודה - מזון</div><div class="sub">03/05/2026 | קופה קטנה</div></div>
-          <div style="display:flex;align-items:center;gap:8px"><div class="expense-amount">148 ₪</div><div class="traffic">🟡</div></div>
-        </div>
-        <div class="expense-item">
-          <div class="expense-info"><div class="title">חניון עירוני - חניה</div><div class="sub">01/05/2026 | החזר אישי</div></div>
-          <div style="display:flex;align-items:center;gap:8px"><div class="expense-amount">35 ₪</div><div class="traffic">🟢</div></div>
-        </div>
-        <div class="expense-item">
-          <div class="expense-info"><div class="title">ציוד משרד - כללי</div><div class="sub">28/04/2026 | כרטיס עמותה</div></div>
-          <div style="display:flex;align-items:center;gap:8px"><div class="expense-amount">210 ₪</div><div class="traffic">🔴</div></div>
+      <div class="wg">
+        <div class="wc"><div class="wlbl t">קופה קטנה</div><div class="wamt">&#8362;450</div><div class="whint">יתרה לחודש</div></div>
+        <div class="wc"><div class="wlbl b">החזרים</div><div class="wamt">&#8362;120</div><div class="whint">ממתינים לאישור</div></div>
+      </div>
+      <div class="phsec"><span>דיווחים אחרונים</span><a>הצג הכל</a></div>
+      <div class="elist" id="explist">
+        <div class="ei"><div class="ei-l"><div class="ei-ico" style="background:var(--teal-lt)">&#x1F355;</div><div><div class="ei-n">דומינוס</div><div class="ei-m">קופה קטנה</div></div></div><div class="ei-r"><div class="ei-a">&#8362;180</div><span class="bdg bok">אושר &#x2713;</span></div></div>
+        <div class="ei"><div class="ei-l"><div class="ei-ico" style="background:var(--warn-lt)">&#x2615;</div><div><div class="ei-n">ארומה</div><div class="ei-m">החזר אישי</div></div></div><div class="ei-r"><div class="ei-a">&#8362;24</div><span class="bdg bpd">בבדיקה</span></div></div>
+      </div>
+      <div class="pfab">
+        <div class="fab-grid">
+          <button class="fab-btn fab-scan" onclick="openScan('coordinator')">&#x1F4F8; סרקי קבלה</button>
+          <button class="fab-btn fab-km" onclick="openKm('coordinator')">&#x1F697; ק&#x05F4;&#x05DE;</button>
+          <button class="fab-btn fab-hrs" onclick="openHrs('coordinator')">&#x23F1; שעות</button>
         </div>
       </div>
     </div>
-    <!-- PAGE: ק״מ -->
-    <div class="page" id="page-km">
-      <div class="page-title">דיווח ק״מ יומי</div>
-      <div class="card">
-        <div class="card-title">דיווח נסיעה</div>
-        <div class="form-group">
-          <label>מוצא</label>
-          <input type="text" id="km-from" placeholder="רחוב/עיר מוצא">
-        </div>
-        <div class="form-group">
-          <label>יעד</label>
-          <input type="text" id="km-to" placeholder="יעד הנסיעה">
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>ק״מ</label>
-            <input type="number" id="km-amount" placeholder="0" oninput="calcKm()">
-          </div>
-          <div class="form-group">
-            <label>תאריך</label>
-            <input type="date" id="km-date">
-          </div>
-        </div>
-        <div id="km-calc" style="background:#f0fdf4;border-radius:8px;padding:12px;margin:8px 0;display:none">
-          <div style="font-size:13px;color:#6b7280">סכום לפי 2.24 ₪/ק״מ</div>
-          <div id="km-total" style="font-size:24px;font-weight:900;color:var(--accent)"></div>
-        </div>
-        <button class="btn btn-primary" style="margin-top:8px" onclick="submitKm()">שלח דיווח</button>
-      </div>
-      <div class="card">
-        <div class="card-title">נסיעות החודש</div>
-        <div class="stat-row"><span class="stat-label">סה"כ ק״מ</span><span class="stat-value">342 ק״מ</span></div>
-        <div class="stat-row"><span class="stat-label">סכום לתשלום</span><span class="stat-value">766 ₪</span></div>
-        <div class="stat-row"><span class="stat-label">סטטוס</span><span class="badge badge-yellow">🟡 ממתין לאישור</span></div>
-      </div>
-    </div>
-
-    <!-- PAGE: שעות -->
-    <div class="page" id="page-hours">
-      <div class="page-title">שעות עבודה</div>
-      <div class="punch-section">
-        <div class="live-clock" id="live-clock">00:00:00</div>
-        <div class="punch-status" id="punch-status">לא מחובר</div>
-        <div style="display:flex;gap:10px;justify-content:center">
-          <button class="btn-sm punch-in" id="btn-punch-in" onclick="punchIn()">כניסה ✅</button>
-          <button class="btn-sm punch-out-btn" id="btn-punch-out" onclick="punchOut()" style="display:none">יציאה 🚪</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">יומן שעות - מאי 2026</div>
-        <div class="hours-log"><span>ראשון 04/05</span><span>08:30 - 17:00</span><span class="badge badge-green">8.5 ש</span></div>
-        <div class="hours-log"><span>שני 03/05</span><span>08:45 - 16:30</span><span class="badge badge-green">7.75 ש</span></div>
-        <div class="hours-log"><span>שלישי 02/05</span><span>09:00 - 17:15</span><span class="badge badge-green">8.25 ש</span></div>
-        <div class="stat-row" style="margin-top:8px"><span class="stat-label">סה"כ החודש</span><span class="stat-value" style="color:var(--accent)">24.5 שעות</span></div>
-      </div>
-    </div>
-    <!-- PAGE: אישורים (manager) -->
-    <div class="page" id="page-approvals">
-      <div class="page-title">אישורים ממתינים</div>
-      <div class="card">
-        <div class="card-title">הצוות שלי - ממתין לאישור</div>
-        <div class="expense-item">
-          <div class="expense-info"><div class="title">דנה שמש - מזון</div><div class="sub">04/05/2026 | קופה קטנה | ✏️ עודכן ידנית</div></div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-            <div style="display:flex;align-items:center;gap:6px"><div class="expense-amount">148 ₪</div><div class="traffic">🟡</div></div>
-            <div style="display:flex;gap:6px">
-              <button class="btn-sm btn-approve" onclick="approveItem(this,'green')">אשר ✓</button>
-              <button class="btn-sm btn-reject" onclick="approveItem(this,'red')">דחה ✕</button>
-            </div>
-          </div>
-        </div>
-        <div class="expense-item">
-          <div class="expense-info"><div class="title">רות כהן - חניה</div><div class="sub">03/05/2026 | החזר אישי</div></div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-            <div style="display:flex;align-items:center;gap:6px"><div class="expense-amount">55 ₪</div><div class="traffic">🟡</div></div>
-            <div style="display:flex;gap:6px">
-              <button class="btn-sm btn-approve" onclick="approveItem(this,'green')">אשר ✓</button>
-              <button class="btn-sm btn-reject" onclick="approveItem(this,'red')">דחה ✕</button>
-            </div>
-          </div>
-        </div>
-        <div class="expense-item">
-          <div class="expense-info"><div class="title">נועה מזרחי - ציוד</div><div class="sub">02/05/2026 | כרטיס עמותה</div></div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-            <div style="display:flex;align-items:center;gap:6px"><div class="expense-amount">320 ₪</div><div class="traffic">🟡</div></div>
-            <div style="display:flex;gap:6px">
-              <button class="btn-sm btn-approve" onclick="approveItem(this,'green')">אשר ✓</button>
-              <button class="btn-sm btn-reject" onclick="approveItem(this,'red')">דחה ✕</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PAGE: קופה קטנה (manager) -->
-    <div class="page" id="page-petty">
-      <div class="page-title">קופה קטנה - נרקיס</div>
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-size:13px;color:#6b7280">יתרה נוכחית</span>
-          <span class="badge badge-yellow">🟡 62%</span>
-        </div>
-        <div style="font-size:32px;font-weight:900;color:var(--accent)" id="petty-balance">1,240 ₪</div>
-        <div style="font-size:13px;color:#6b7280">מתוך 2,000 ₪</div>
-        <div class="progress-bar"><div class="progress-fill warn" id="petty-bar" style="width:62%"></div></div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="btn-sm btn-approve" style="flex:1" onclick="renewFund()">בקש חידוש קופה</button>
-          <button class="btn-sm" style="flex:1;background:#dbeafe;color:#1e40af;border:1.5px solid #93c5fd" onclick="showPettyHistory()">היסטוריה</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">עסקאות אחרונות</div>
-        <div class="stat-row"><span class="stat-label">דנה שמש - מזון</span><span class="stat-value" style="color:var(--red)">-148 ₪</span></div>
-        <div class="stat-row"><span class="stat-label">רות כהן - חניה</span><span class="stat-value" style="color:var(--red)">-55 ₪</span></div>
-        <div class="stat-row"><span class="stat-label">נועה מזרחי - ציוד</span><span class="stat-value" style="color:var(--red)">-320 ₪</span></div>
-        <div class="stat-row"><span class="stat-label">חידוש קופה</span><span class="stat-value" style="color:var(--green)">+2,000 ₪</span></div>
-      </div>
-    </div>
-    <!-- PAGE: כספים (finance) -->
-    <div class="page" id="page-finance">
-      <div class="page-title">סקירת כספים</div>
-      <div class="card">
-        <div class="card-title">3 זרמים - מאי 2026</div>
-        <div class="finance-stream">
-          <div class="stream-title">💰 קופות קטנות (חבילות)</div>
-          <div class="stream-amount">8,750 ₪</div>
-          <div style="font-size:12px;color:#6b7280;margin-top:4px">4 פרויקטים | 3 ממתינות לחידוש</div>
-        </div>
-        <div class="finance-stream yellow">
-          <div class="stream-title">🧾 החזרים אישיים (סוף חודש)</div>
-          <div class="stream-amount">3,280 ₪</div>
-          <div style="font-size:12px;color:#6b7280;margin-top:4px">23 בקשות | אישור עד 31/05</div>
-        </div>
-        <div class="finance-stream blue">
-          <div class="stream-title">🕐 שכר - ק״מ + שעות</div>
-          <div class="stream-amount">12,450 ₪</div>
-          <div style="font-size:12px;color:#6b7280;margin-top:4px">18 עובדים | ייצוא לשכר</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">פרויקטים - יתרות קופה</div>
-        <div class="project-card">
-          <div class="project-header"><span class="project-name">נרקיס</span><span class="badge badge-yellow">🟡 1,240 / 2,000 ₪</span></div>
-          <div style="font-size:12px;color:#6b7280">מנהלת: מיכל כהן | 5 עובדים</div>
-          <div class="progress-bar"><div class="progress-fill warn" style="width:62%"></div></div>
-        </div>
-        <div class="project-card">
-          <div class="project-header"><span class="project-name">שי לחלש</span><span class="badge badge-red">🔴 180 / 1,500 ₪</span></div>
-          <div style="font-size:12px;color:#6b7280">מנהלת: רחל לוי | 3 עובדים</div>
-          <div class="progress-bar"><div class="progress-fill danger" style="width:12%"></div></div>
-        </div>
-        <div class="project-card">
-          <div class="project-header"><span class="project-name">קשרי שכנים</span><span class="badge badge-green">🟢 1,850 / 2,000 ₪</span></div>
-          <div style="font-size:12px;color:#6b7280">מנהלת: שירה ברק | 7 עובדים</div>
-          <div class="progress-bar"><div class="progress-fill" style="width:93%"></div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PAGE: אדמין -->
-    <div class="page" id="page-admin">
-      <div class="page-title">ניהול מערכת</div>
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <div class="card-title" style="margin-bottom:0">פרויקטים</div>
-          <button class="btn-sm btn-approve" onclick="addProject()">+ פרויקט</button>
-        </div>
-        <div class="stat-row"><span class="stat-label">נרקיס</span><span><span class="badge badge-green">פעיל</span></span></div>
-        <div class="stat-row"><span class="stat-label">שי לחלש</span><span><span class="badge badge-green">פעיל</span></span></div>
-        <div class="stat-row"><span class="stat-label">קשרי שכנים</span><span><span class="badge badge-green">פעיל</span></span></div>
-      </div>
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <div class="card-title" style="margin-bottom:0">משתמשים</div>
-          <button class="btn-sm btn-approve" onclick="addUser()">+ משתמש</button>
-        </div>
-        <div class="user-row"><span class="badge badge-blue">אדמין</span><span>יסמין (בעלים)</span><span style="color:#6b7280">yasminko27@gmail.com</span></div>
-        <div class="user-row"><span class="badge badge-green">מנהלת</span><span>מיכל כהן</span><span style="color:#6b7280">michal@pettycash.app</span></div>
-        <div class="user-row"><span class="badge" style="background:#fce7f3;color:#9d174d">רכזת</span><span>דנה שמש</span><span style="color:#6b7280">dana@pettycash.app</span></div>
-        <div class="user-row"><span class="badge badge-yellow">כספים</span><span>יוסי לוי</span><span style="color:#6b7280">yossi@pettycash.app</span></div>
-      </div>
-      <div class="card">
-        <div class="card-title">הגדרות OpenAI</div>
-        <div class="form-group">
-          <label>מפתח API (OpenAI) - לסריקה חכמה</label>
-          <input type="password" id="openai-key" placeholder="sk-... (אופציונלי)">
-        </div>
-        <button class="btn btn-secondary" style="width:auto;padding:8px 16px;font-size:13px" onclick="saveApiKey()">שמור מפתח</button>
-      </div>
-    </div>
-
-  </div><!-- /pages -->
-</div><!-- /app -->
-<!-- CAMERA MODAL -->
-<div id="camera-modal">
-  <div class="camera-box">
-    <video id="camera-video" autoplay playsinline></video>
-    <div class="camera-overlay"></div>
-    <div class="quality-hint" id="quality-hint"><span class="quality-good">✓ תמונה טובה - לחץ לצלם</span></div>
-  </div>
-  <div class="camera-actions">
-    <button class="btn btn-primary" id="capture-btn" onclick="capturePhoto()">📸 צלם</button>
-    <button class="btn btn-secondary" onclick="closeCamera()">ביטול</button>
   </div>
 </div>
 
-<!-- AI ANALYZING -->
-<div class="ai-analyzing" id="ai-analyzing">
-  <div class="ai-spinner"></div>
-  <div class="ai-text">AI מנתח את הקבלה...</div>
-  <div class="ai-sub">מחלץ תאריך, סכום וקטגוריה</div>
-</div>
-
-<!-- EXPENSE FORM MODAL -->
-<div id="expense-form-modal">
-  <div class="expense-form-box">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <h2 style="font-size:18px;font-weight:800" id="form-modal-title">הוצאה חדשה</h2>
-      <button onclick="closeExpenseForm()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6b7280">✕</button>
+<!-- MANAGER -->
+<div class="panel" id="panel-manager">
+  <div class="ptag pt-teal"><div class="ptag-dot"></div>בקרת מנהלת תוכנית</div>
+  <div class="ptitle">תוכנית נוער בסיכון</div>
+  <div class="psub">הקופה הקטנה נמצאת אצלך · אשרי הוצאות · שלחי קבלות לכספים לחידוש</div>
+  <div class="pbar">
+    <div class="pbt">
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">יתרת קופה קטנה בידייך</div><div class="pbamt" id="petty-bal">&#8362;2,890</div></div>
+      <div class="pbr">מתוך &#8362;8,500<br><span id="petty-pct" style="font-family:var(--mono);font-size:17px;color:var(--teal)">34%</span></div>
     </div>
-    <div id="ai-filled-badge" style="display:none;margin-bottom:12px">
-      <span class="badge badge-blue">🤖 מולא על ידי AI - ניתן לערוך</span>
+    <div class="ptrack"><div class="pfill" id="pfill" style="width:34%;background:linear-gradient(90deg,var(--teal),#2BBFA0CC)"></div></div>
+    <div class="pmeta"><span id="petty-spent">הוצאות החודש: &#8362;5,610</span><span>ינואר 2025</span></div>
+    <div class="palert" id="palert">
+      <span class="palert-txt" style="font-size:12px;color:var(--warn);font-weight:600">&#x26A0;&#xFE0F; הקופה מתרוקנת — שלחי קבלות ליוסי לחידוש</span>
+      <button class="bsend" onclick="sendToFinance()">שלחי ליוסי &#x2192;</button>
     </div>
-    <div id="manual-edited-badge" style="display:none;margin-bottom:12px">
-      <span class="manual-tag">✏️ עודכן ידנית</span>
+  </div>
+  <div class="srow s3">
+    <div class="scard"><div class="slbl">ממתינים לאישור</div><div class="sval w" id="mgr-pend">0</div><div class="ssub">דיווחים</div></div>
+    <div class="scard"><div class="slbl">אושרו החודש</div><div class="sval g" id="mgr-appr">7</div><div class="ssub">עסקאות</div></div>
+    <div class="scard"><div class="slbl">&#x26A0;&#xFE0F; מסומן לבדיקה</div><div class="sval r" id="mgr-flag">0</div><div class="ssub">קבלות לא ברורות</div></div>
+  </div>
+  <div class="action-bar">
+    <button class="action-btn" onclick="openScan('manager')">&#x1F4F8; סרקי קבלה</button>
+    <button class="action-btn km" onclick="openKm('manager')">&#x1F697; ק&#x05F4;&#x05DE; שלך</button>
+    <button class="action-btn hrs" onclick="openHrs('manager')">&#x23F1; שעות שלך</button>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchMgrTab('approvals',this)"><span class="tbdg" id="mgrbdg" style="display:none">0</span>אישור רכזות</div>
+    <div class="tab" onclick="switchMgrTab('team',this)">&#x1F465; ניהול צוות</div>
+  </div>
+  <div id="mgrtab-approvals"><div id="coordlist"></div></div>
+  <div id="mgrtab-team" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
+      <div style="font-size:12px;color:var(--muted)"><span id="tmon">3</span> פעילות · <span id="tmoff">1</span> לא פעילות</div>
+      <button class="btnadd" onclick="openAdd()">+ הוספת עובד/ת</button>
     </div>
-    <div class="form-group">
-      <label>סוג הוצאה</label>
-      <select id="expense-type">
-        <option value="petty">קופה קטנה</option>
-        <option value="personal">החזר אישי</option>
-        <option value="card">כרטיס עמותה</option>
-      </select>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>תאריך</label>
-        <input type="date" id="expense-date" oninput="markManual()">
-      </div>
-      <div class="form-group">
-        <label>שעה</label>
-        <input type="time" id="expense-time" oninput="markManual()">
-      </div>
-    </div>
-    <div class="form-group">
-      <label>סכום (₪)</label>
-      <input type="number" id="expense-amount" placeholder="0.00" oninput="markManual()">
-    </div>
-    <div class="form-group">
-      <label>קטגוריה</label>
-      <select id="expense-category" onchange="markManual()">
-        <option value="food">מזון</option>
-        <option value="activity">פעילות</option>
-        <option value="parking">חניה</option>
-        <option value="equipment">ציוד</option>
-        <option value="fuel">דלק</option>
-        <option value="other">אחר</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>הערות</label>
-      <input type="text" id="expense-notes" placeholder="תיאור קצר..." oninput="markManual()">
-    </div>
-    <div style="display:flex;gap:10px;margin-top:8px">
-      <button class="btn btn-primary" style="flex:2" onclick="submitExpense()">שלח לאישור 🟡</button>
-      <button class="btn btn-secondary" style="flex:1" onclick="closeExpenseForm()">ביטול</button>
+    <div id="teamlist"></div>
+    <div class="afrm" id="afrm">
+      <div style="font-size:12px;font-weight:700;margin-bottom:9px;color:var(--blue)">&#x2795; עובד/ת חדש/ה</div>
+      <div class="g2"><div><label class="flbl">שם מלא</label><input type="text" id="nn" class="fi" placeholder="שם ושם משפחה"></div><div><label class="flbl">תפקיד</label><select id="nr" class="fi" style="cursor:pointer"><option>רכזת שטח</option><option>עובד סוציאלי</option></select></div></div>
+      <div style="margin-bottom:9px"><label class="flbl">אימייל</label><input type="email" id="ne" class="fi" placeholder="name@org.il" style="direction:ltr;text-align:left"></div>
+      <div style="display:flex;gap:7px"><button class="btncfm" onclick="addMember()">&#x2713; הוספה</button><button class="btncnl" onclick="closeAdd()">ביטול</button></div>
     </div>
   </div>
 </div>
+<!-- FINANCE -->
+<div class="panel" id="panel-finance">
+  <div class="ptag pt-green"><div class="ptag-dot"></div>ממשק כספים — יוסי לוי</div>
+  <div class="ptitle">דשבורד כספים</div>
+  <div class="psub">כל הארגון · כל התוכניות · קופות קטנות · החזרים לשכר</div>
+  <!-- Own expense actions -->
+  <div class="action-bar" style="margin-bottom:18px">
+    <button class="action-btn" onclick="openScan('finance')">&#x1F4F8; סרקי קבלה</button>
+    <button class="action-btn km" onclick="openKm('finance')">&#x1F697; ק&#x05F4;&#x05DE; שלי</button>
+    <button class="action-btn hrs" onclick="openHrs('finance')">&#x23F1; שעות שלי</button>
+  </div>
+  <div class="srow s4" style="margin-bottom:20px">
+    <div class="scard"><div class="slbl">הגשות קופה קטנה</div><div class="sval b" id="ystat-petty">2</div><div class="ssub">ממתינות לאישור</div></div>
+    <div class="scard"><div class="slbl">החזרים לשכר</div><div class="sval p" id="ystat-sal">3</div><div class="ssub">עובדות לתלוש ינואר</div></div>
+    <div class="scard"><div class="slbl">&#x26A0;&#xFE0F; קבלות לבדיקה</div><div class="sval r" id="ystat-flag">1</div><div class="ssub">זיהוי AI לא ברור</div></div>
+    <div class="scard"><div class="slbl">סה"כ לאישור</div><div class="sval g" id="ystat-total">&#8362;4,960</div><div class="ssub">ינואר 2026</div></div>
+  </div>
+  <div class="rfcard" id="rfcard">
+    <div class="rft">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--warn)">&#x1F4E4; בקשת חידוש קופה — מיכל כהן</div>
+        <div style="font-size:11px;color:var(--warn);opacity:.8;margin-top:2px" id="rf-sub">נשלחו X קבלות לאישורך</div>
+      </div>
+      <div class="rfamt" id="rf-amt">&#8362;0</div>
+    </div>
+    <button class="btn-rfok" onclick="approveRefill()">&#x2713; אשר העברת כסף למנהלת</button>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:0">
+    <div class="fin-tabs" style="margin-bottom:0;border-bottom:none;flex:1">
+      <div class="ftab active" onclick="yossiTab('petty',this)">&#x1F3E6; קופות קטנות <span class="cnt cnt-b" id="ycnt-petty">2</span></div>
+      <div class="ftab f-salary" onclick="yossiTab('salary',this)">&#x1F4BC; החזרים לשכר <span class="cnt cnt-p" id="ycnt-salary">3</span></div>
+      <div class="ftab f-flag" onclick="yossiTab('flag',this)">&#x26A0;&#xFE0F; לבדיקה <span class="cnt cnt-r" id="ycnt-flag">1</span></div>
+    </div>
+    <div class="export-bar">
+      <button class="btn-export" onclick="exportCSV('petty')" title="ייצוא קופה קטנה">&#x2B07; קופה קטנה</button>
+      <button class="btn-export" onclick="exportCSV('salary')" title="ייצוא החזרים לשכר">&#x2B07; החזרים לשכר</button>
+      <button class="btn-export btn-export-all" onclick="exportCSV('all')" title="דוח ארגוני מאוחד">&#x2B07; דוח מלא</button>
+    </div>
+  </div>
+  <div style="border-bottom:2px solid var(--border);margin-bottom:16px"></div>
+  <div id="ytab-petty"><div style="font-size:11px;color:var(--muted);margin-bottom:12px">לחץ על הגשה לפירוט הקבלות</div><div id="petty-submissions"></div></div>
+  <div id="ytab-salary" style="display:none"><div style="font-size:11px;color:var(--muted);margin-bottom:12px">מקובץ לפי עובדת · כולל ק&#x05F4;&#x05DE;, הוצאות אישיות, חנייה · לחץ לפירוט</div><div id="salary-employees"></div></div>
+  <div id="ytab-flag" style="display:none">
+    <div style="background:var(--flag-lt);border:1px solid var(--flag-border);border-radius:var(--rsm);padding:12px 16px;margin-bottom:14px;font-size:12px;color:var(--flag);font-weight:600">&#x26A0;&#xFE0F; קבלות אלו זוהו על ידי ה-AI עם רמת ביטחון נמוכה — יש לאמת ידנית לפני אישור</div>
+    <div id="flagged-list"></div>
+  </div>
+  <div class="flog" id="finlog" style="margin-top:16px">
+    <span class="lt">&gt; SYSTEM: PettyCash AI v4.0 — Finance Dashboard</span><br>
+    <span class="lm">&gt; PETTY_CASH: 2 submissions pending approval</span><br>
+    <span class="lm">&gt; SALARY_QUEUE: 3 employees | January 2026 payroll</span><br>
+    <span class="lcur"></span>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="panel" id="panel-admin">
+  <div class="ptag pt-purple"><div class="ptag-dot"></div>HR Admin — ניהול ארגוני</div>
+  <div class="ptitle">תמונת מצב ארגונית</div>
+  <div class="psub">ניהול תוכניות · שיוך מנהלות · גישות למערכת</div>
+  <!-- Own expense actions -->
+  <div class="action-bar" style="margin-bottom:18px">
+    <button class="action-btn" onclick="openScan('admin')">&#x1F4F8; סרקי קבלה</button>
+    <button class="action-btn km" onclick="openKm('admin')">&#x1F697; ק&#x05F4;&#x05DE; שלי</button>
+    <button class="action-btn hrs" onclick="openHrs('admin')">&#x23F1; שעות שלי</button>
+  </div>
+  <div class="org-overview">
+    <div class="ov-card"><div class="ov-val" id="ov-progs">2</div><div class="ov-lbl">תוכניות פעילות</div></div>
+    <div class="ov-card"><div class="ov-val" id="ov-mgrs">2</div><div class="ov-lbl">מנהלות תוכנית</div></div>
+    <div class="ov-card"><div class="ov-val" id="ov-coords">4</div><div class="ov-lbl">רכזות ומדריכים</div></div>
+    <div class="ov-card"><div class="ov-val" id="ov-budget">&#8362;17K</div><div class="ov-lbl">תקציב קופות חודשי</div></div>
+  </div>
+  <div id="programs-list"></div>
+</div>
+
+</div><!-- screen-app -->
+<!-- SCANNER OVERLAY -->
+<div id="scanov">
+  <div class="ss">
+    <div class="sh2"></div>
+    <div class="st" id="scan-title">מנוע AI — סריקת קבלה</div>
+    <div class="ssb" id="scan-sub"><span class="dots"><span></span><span></span><span></span></span>&nbsp;מנתח...</div>
+    <div class="rbox" id="rbox"><div class="sln"></div><div style="text-align:center"><div style="font-size:24px">&#x1F9FE;</div><div style="font-size:9px;color:var(--blue);font-weight:600;margin-top:3px">OCR · AI Classification</div></div></div>
+    <div class="aform" id="aform">
+      <div class="g2a">
+        <div class="fg2"><div class="afl" id="lbl-amt">סכום <span class="conf-ok" id="conf-amt">&#x2713; ברור</span></div><input class="ai" id="fa" placeholder="&#8362; 000.00"></div>
+        <div class="fg2"><div class="afl" id="lbl-date">תאריך <span class="conf-ok" id="conf-date">&#x2713; ברור</span></div><input class="ai" id="fd" placeholder="DD/MM/YY"></div>
+      </div>
+      <div class="fg2"><div class="afl">ספק <span class="conf-ok" id="conf-vendor">&#x2713; ברור</span></div><input class="ai" id="fv" placeholder="שם הספק"></div>
+      <div class="fg2" style="margin-bottom:8px"><div class="afl">קטגוריה</div><select class="ai" id="fc" style="cursor:pointer"><option value="food">&#x1F355; מזון / פעילות</option><option value="coffee">&#x2615; קפה / פגישות</option><option value="supplies">&#x1F4E6; ציוד</option><option value="services">&#x1F527; שירותים מקצועיים</option></select></div>
+      <div class="fg2" style="margin-bottom:9px">
+        <div class="afl">מסלול</div>
+        <div class="rt">
+          <div class="ro sel" onclick="selR(this,'petty')">&#x1F3E6; קופה</div>
+          <div class="ro" onclick="selR(this,'personal')">&#x1F464; החזר</div>
+          <div class="ro" onclick="selR(this,'km')">&#x1F697; ק&#x05F4;&#x05DE;</div>
+        </div>
+      </div>
+      <div class="refund-q" id="refund-q" style="display:none;">
+        <div class="rq-detected" id="rq-detected" style="display:none;"></div>
+        <div class="rq-ask" id="rq-ask" style="display:none;">
+          <div class="rq-label">&#x1F4B3; שילמת מכיסך?</div>
+          <div class="rq-btns">
+            <button class="rq-btn rq-yes" onclick="setRefund(true)">&#x2713; כן — מגיע לי החזר</button>
+            <button class="rq-btn rq-no" onclick="setRefund(false)">&#x2717; לא — לא צריך החזר</button>
+          </div>
+        </div>
+      </div>
+      <div class="flag-warn" id="flag-warn">
+        <div class="fw-title">&#x26A0;&#xFE0F; קבלה לא ברורה — תסומן לבדיקה אצל יוסי</div>
+        <ul class="fw-items" id="fw-list"></ul>
+        <div class="fw-note">ניתן לתקן ידנית לפני שליחה, או לשלוח כך ויוסי יבדוק</div>
+      </div>
+      <button class="btn-sub normal" id="scan-submit" onclick="submitExpense()">&#x2705; שלחי למנהלת לאישור</button>
+      <button class="btn-cnc" onclick="closeScan()">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- KM OVERLAY — number only, no description -->
+<div id="kmov">
+  <div class="km-sheet">
+    <div class="sh2"></div>
+    <div class="st">&#x1F697; דיווח ק&#x05F4;&#x05DE;</div>
+    <div class="km-rate">תעריף: &#8362;1.50 לק&#x05F4;&#x05DE; (נסיעה עסקית)</div>
+    <div class="fg2"><label class="flbl">מספר ק&#x05F4;&#x05DE; שנסעת</label><input type="number" id="km-val" class="fi" placeholder="למשל: 42" oninput="calcKm(this.value)" style="font-family:var(--mono);font-size:18px"></div>
+    <div class="km-calc" id="km-calc">
+      <div class="km-calc-amt" id="km-calc-amt">&#8362;0.00</div>
+      <div class="km-calc-sub" id="km-calc-sub">0 ק&#x05F4;&#x05DE; &times; &#8362;1.50</div>
+    </div>
+    <button class="btn-sub normal" onclick="submitKm()" style="margin-bottom:6px">&#x2705; שלחי דיווח ק&#x05F4;&#x05DE;</button>
+    <button class="btn-cnc" onclick="closeKm()">ביטול</button>
+  </div>
+</div>
+
+<!-- HOURS OVERLAY -->
+<div id="hrsov">
+  <div class="hrs-sheet">
+    <div class="sh2"></div>
+    <div class="st">&#x23F1; דיווח שעות</div>
+    <div class="hrs-tabs">
+      <div class="hrs-tab active" onclick="switchHrsTab('attendance',this)">&#x1F4C5; נוכחות</div>
+      <div class="hrs-tab" onclick="switchHrsTab('absence',this)">&#x1F3D6; היעדרות</div>
+    </div>
+    <!-- ATTENDANCE TAB -->
+    <div id="hrs-attendance">
+      <div class="fg2"><label class="flbl">תאריך</label><input type="date" id="hrs-date" class="fi"></div>
+      <div class="g2a">
+        <div class="fg2"><label class="flbl">שעת כניסה</label><input type="time" id="hrs-in" class="fi" oninput="calcHrs()"></div>
+        <div class="fg2"><label class="flbl">שעת יציאה</label><input type="time" id="hrs-out" class="fi" oninput="calcHrs()"></div>
+      </div>
+      <div class="hrs-calc" id="hrs-calc">
+        <div class="hrs-calc-amt" id="hrs-calc-amt">0:00</div>
+        <div class="hrs-calc-sub" id="hrs-calc-sub">סה"כ שעות לדיווח</div>
+      </div>
+      <button class="btn-sub hrs-sub" onclick="submitHrs()">&#x2705; שלח דיווח נוכחות</button>
+      <button class="btn-cnc" onclick="closeHrs()">ביטול</button>
+    </div>
+    <!-- ABSENCE TAB -->
+    <div id="hrs-absence" style="display:none">
+      <div class="fg2"><label class="flbl">סוג היעדרות</label></div>
+      <div class="abs-types">
+        <div class="abs-type sel" id="abt-sick" onclick="selAbsType(this,'sick')">&#x1F912; מחלה</div>
+        <div class="abs-type" id="abt-vacation" onclick="selAbsType(this,'vacation')">&#x1F3D6; חופש</div>
+        <div class="abs-type" id="abt-other" onclick="selAbsType(this,'other')">&#x1F4CB; אחר</div>
+      </div>
+      <div class="g2a">
+        <div class="fg2"><label class="flbl">מתאריך</label><input type="date" id="abs-from" class="fi"></div>
+        <div class="fg2"><label class="flbl">עד תאריך</label><input type="date" id="abs-to" class="fi"></div>
+      </div>
+      <div class="fg2" id="abs-scan-wrap">
+        <label class="flbl">צרף אישור (מחלה)</label>
+        <div class="rbox" id="abs-rbox" style="height:60px;cursor:pointer" onclick="simulateAbsScan()">
+          <div class="sln"></div>
+          <div style="text-align:center;font-size:11px;color:var(--blue);font-weight:600">&#x1F4F8; לחץ לסריקת אישור</div>
+        </div>
+        <div id="abs-scan-done" style="display:none;font-size:11px;color:var(--ok);font-weight:700;margin-top:4px">&#x2713; אישור נסרק בהצלחה</div>
+      </div>
+      <button class="btn-sub hrs-sub" onclick="submitAbsence()">&#x2705; שלח דיווח היעדרות</button>
+      <button class="btn-cnc" onclick="closeHrs()">ביטול</button>
+    </div>
+  </div>
+</div>
+<!-- RECEIPT MODAL -->
+<div id="recov">
+  <div class="rec-modal">
+    <div class="rec-modal-hdr">
+      <div>
+        <div class="rec-title" id="rec-title">&#x1F9FE; קבלה סרוקה</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px" id="rec-subtitle">נסרקה על ידי AI · ניתן לתיקון ידני</div>
+      </div>
+      <button class="rec-close" onclick="closeRec()">&#x2715;</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <span style="font-size:10px;color:var(--muted)">ציון AI:</span>
+      <span class="conf-badge cb-ok" style="font-size:10px">&#x2713; גבוה (85%+)</span>
+      <span class="conf-badge cb-mid" style="font-size:10px">~ בינוני (70–84%)</span>
+      <span class="conf-badge cb-lo" style="font-size:10px">? נמוך — בדוק!</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div>
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase">ספק</span><span class="conf-badge" id="cb-vendor">&#x2713;</span></div>
+        <input type="text" id="re-vendor" class="fi" style="font-size:14px;font-weight:700" oninput="recChanged()">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase">סכום</span><span class="conf-badge" id="cb-amt">&#x2713;</span></div>
+          <input type="text" id="re-amt" class="fi" style="font-family:var(--mono);font-size:16px;font-weight:500" oninput="recChanged()">
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase">תאריך</span><span class="conf-badge" id="cb-date">&#x2713;</span></div>
+          <input type="text" id="re-date" class="fi" style="font-family:var(--mono);font-size:14px" oninput="recChanged()">
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase">קטגוריה</span><span class="conf-badge cb-ok" style="font-size:10px">בחירה ידנית</span></div>
+        <select id="re-cat" class="fi" style="cursor:pointer"><option>מזון / פעילות</option><option>קפה / פגישות</option><option>ציוד</option><option>שירותים מקצועיים</option><option>חנייה</option><option>נסיעות</option><option>אחר</option></select>
+      </div>
+    </div>
+    <div id="rec-changed-banner" style="display:none;margin-top:12px;padding:9px 13px;background:rgba(58,143,200,.08);border:1px solid var(--blue-mid);border-radius:var(--rxs);font-size:11px;color:var(--blue);font-weight:600">&#x270F;&#xFE0F; בוצע תיקון ידני — השינוי יישמר עם האישור</div>
+    <div class="rec-flag-banner" id="rec-flag-banner" style="display:none;margin-top:12px"><div class="rec-flag-title">&#x26A0;&#xFE0F; שדות שזוהו כלא ברורים — אנא בדוק ותקן</div><div class="rec-flag-items" id="rec-flag-items"></div></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button onclick="saveRecEdit()" style="flex:1;padding:11px;border-radius:var(--rxs);background:var(--blue);color:#fff;border:none;font-family:var(--body);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s">&#x1F4BE; שמור תיקון</button>
+      <button onclick="closeRec()" style="padding:11px 16px;border-radius:var(--rxs);background:var(--bg);color:var(--muted);border:1px solid var(--border);font-family:var(--body);font-size:13px;cursor:pointer">סגור</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="tmsg">—</span></div>
 <script>
-const SUPA_URL = "https://soqxqmpoertwxkwhlzen.supabase.co";
-const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvcXhxbXBvZXJ0d3hrd2hsemVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODc0NzYsImV4cCI6MjA5MzA2MzQ3Nn0.umDsrKOVKyA9tWnwtDHy-TgXl6MFT_JzA_fmNbCXeZI";
-const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+<script>
+// ══ SINGLE USER LOGIN ══
+const ADMIN_EMAIL = 'yasminko27@gmail.com';
+const ADMIN_PASS  = '1234Yasmin!'; // change to actual password
 
-let currentUser = null;
-let currentRole = null;
-let currentViewAs = null;
-let aiFilledData = false;
-let punchInTime = null;
-let clockInterval = null;
+const KM_RATE=1.50;
+const CONF_THRESH=70;
 
-const TABS = {
-  field:   [{id:"expenses",label:"הוצאות"},{id:"km",label:"ק״מ"},{id:"hours",label:"שעות"}],
-  manager: [{id:"expenses",label:"הוצאות שלי"},{id:"approvals",label:"אישורים"},{id:"petty",label:"קופה קטנה"},{id:"km",label:"ק״מ"},{id:"hours",label:"שעות"}],
-  finance: [{id:"finance",label:"סקירת כספים"},{id:"expenses",label:"הוצאות שלי"},{id:"km",label:"ק״מ"},{id:"hours",label:"שעות"}],
-  admin:   [{id:"admin",label:"ניהול"},{id:"expenses",label:"הוצאות שלי"},{id:"approvals",label:"אישורים"},{id:"petty",label:"קופה קטנה"},{id:"finance",label:"כספים"},{id:"km",label:"ק״מ"},{id:"hours",label:"שעות"}]
-};
-
-function toast(msg, type) {
-  type = type || "info";
-  var el = document.createElement("div");
-  el.className = "toast " + type;
-  el.textContent = msg;
-  document.getElementById("toast-container").appendChild(el);
-  setTimeout(function() { el.remove(); }, 3500);
-}
-
-function showPage(id) {
-  document.querySelectorAll(".page").forEach(function(p){ p.classList.remove("active"); });
-  document.querySelectorAll(".nav-tab").forEach(function(t){ t.classList.remove("active"); });
-  var pg = document.getElementById("page-" + id);
-  if(pg) pg.classList.add("active");
-  var tb = document.querySelector(".nav-tab[data-page=" + id + "]");
-  if(tb) tb.classList.add("active");
-}
-
-function buildNav(role) {
-  var tabs = TABS[role] || TABS.field;
-  var nav = document.getElementById("nav-tabs");
-  nav.innerHTML = "";
-  tabs.forEach(function(t){
-    var btn = document.createElement("div");
-    btn.className = "nav-tab";
-    btn.setAttribute("data-page", t.id);
-    btn.textContent = t.label;
-    btn.onclick = function(){ showPage(t.id); };
-    nav.appendChild(btn);
-  });
-  if(tabs.length > 0) showPage(tabs[0].id);
-}
-
-async function init() {
-  var sData = await sb.auth.getSession();
-  var session = sData.data.session;
-  if(session) {
-    var uData = await sb.from("profiles").select("*").eq("id", session.user.id).single();
-    if(uData.data) {
-      currentUser = uData.data;
-      currentRole = currentUser.role;
-      showApp();
-    } else {
-      showLogin();
-    }
-  } else {
-    showLogin();
-  }
-}
-
-function showLogin() {
-  document.getElementById("loading").style.display = "none";
-  var ls = document.getElementById("login-screen");
-  ls.style.display = "flex";
-}
-
-function showApp() {
-  document.getElementById("loading").style.display = "none";
-  document.getElementById("login-screen").style.display = "none";
-  var app = document.getElementById("app");
-  app.style.display = "flex";
-  var viewRole = currentViewAs || currentRole;
-  document.getElementById("topbar-user").textContent = (currentUser.full_name || "משתמש") + " (" + viewRole + ")";
-  if(currentRole === "admin") {
-    document.getElementById("admin-bar").style.display = "flex";
-    setViewAs(currentViewAs || "admin");
-  } else {
-    buildNav(viewRole);
-  }
-  startClock();
-  toast("שלום " + (currentUser.full_name || "משתמש") + "! ברוך הבא", "ok");
-}
-
-function setViewAs(role) {
-  currentViewAs = role;
-  document.querySelectorAll(".view-btn").forEach(function(b){ b.classList.remove("active"); });
-  var vb = document.getElementById("vbtn-" + role);
-  if(vb) vb.classList.add("active");
-  buildNav(role);
-  document.getElementById("topbar-user").textContent = (currentUser.full_name || "משתמש") + " (תצוגה: " + role + ")";
-}
-
-async function doLogin() {
-  var email = document.getElementById("login-email").value.trim();
-  var password = document.getElementById("login-password").value;
-  if(!email || !password) { toast("מלא אימייל וסיסמה", "err"); return; }
-  var res = await sb.auth.signInWithPassword({email: email, password: password});
-  if(res.error) { toast("שגיאת כניסה: " + res.error.message, "err"); return; }
-  var uData = await sb.from("profiles").select("*").eq("id", res.data.user.id).single();
-  if(uData.data) { currentUser = uData.data; currentRole = currentUser.role; showApp(); }
-  else { toast("לא נמצא פרופיל למשתמש", "err"); }
-}
-
-async function quickLogin(email, pass) {
-  document.getElementById("login-email").value = email;
-  document.getElementById("login-password").value = pass;
-  await doLogin();
-}
-
-function showLogoutMenu() {
-  if(confirm("להתנתק?")) {
-    sb.auth.signOut();
-    currentUser = null; currentRole = null; currentViewAs = null;
-    document.getElementById("app").style.display = "none";
-    showLogin();
-    toast("התנתקת בהצלחה", "info");
-  }
-}
-function openCamera() {
-  var modal = document.getElementById("camera-modal");
-  modal.classList.add("open");
-  navigator.mediaDevices.getUserMedia({video: {facingMode: "environment", width:{ideal:1280}, height:{ideal:720}}})
-    .then(function(stream){ document.getElementById("camera-video").srcObject = stream; })
-    .catch(function(){ toast("לא ניתן לגשת למצלמה", "err"); modal.classList.remove("open"); });
-  simulateQualityCheck();
-}
-
-function simulateQualityCheck() {
-  var hints = ["✓ תמונה טובה - לחץ לצלם", "⚠ יישר את הכרטיס", "⚠ הצילום מטושטש - התקרב", "✓ מצוין!"];
-  var hintEl = document.getElementById("quality-hint");
-  var i = 0;
-  var interval = setInterval(function(){
-    if(!document.getElementById("camera-modal").classList.contains("open")){ clearInterval(interval); return; }
-    var h = hints[i % hints.length];
-    var isGood = h.indexOf("✓") >= 0;
-    hintEl.innerHTML = "<span class=\"" + (isGood ? "quality-good" : "quality-bad") + "\">" + h + "</span>";
-    i++;
-  }, 1800);
-}
-
-function closeCamera() {
-  var vid = document.getElementById("camera-video");
-  if(vid.srcObject) { vid.srcObject.getTracks().forEach(function(t){t.stop();}); vid.srcObject = null; }
-  document.getElementById("camera-modal").classList.remove("open");
-}
-
-function capturePhoto() {
-  closeCamera();
-  document.getElementById("ai-analyzing").classList.add("show");
-  setTimeout(function(){
-    document.getElementById("ai-analyzing").classList.remove("show");
-    fillAiData();
-    openExpenseForm();
-  }, 2200);
-}
-
-var AI_SAMPLES = [
-  {date:"2026-05-05", time:"10:30", amount:"148", category:"food", notes:"סופר יהודה - מצרכים"},
-  {date:"2026-05-05", time:"14:15", amount:"35", category:"parking", notes:"חניון עירוני"},
-  {date:"2026-05-04", time:"09:00", amount:"210", category:"equipment", notes:"ציוד משרדי - Office Depot"},
-  {date:"2026-05-03", time:"16:45", amount:"89", category:"fuel", notes:"פז - דלק"}
+const KNOWN_CARDS=[
+  {last4:'1234', programId:1, label:'כרטיס קופה — נוער בסיכון'},
+  {last4:'5678', programId:2, label:'כרטיס קופה — קשישים בקהילה'},
 ];
 
-function fillAiData() {
-  var sample = AI_SAMPLES[Math.floor(Math.random() * AI_SAMPLES.length)];
-  document.getElementById("expense-date").value = sample.date;
-  document.getElementById("expense-time").value = sample.time;
-  document.getElementById("expense-amount").value = sample.amount;
-  document.getElementById("expense-category").value = sample.category;
-  document.getElementById("expense-notes").value = sample.notes;
-  document.getElementById("expense-type").value = "petty";
-  aiFilledData = true;
-  document.getElementById("ai-filled-badge").style.display = "block";
-  document.getElementById("manual-edited-badge").style.display = "none";
+let S={username:'',role:'coordinator',loggedIn:false,scanRoute:'petty',scanFor:'coordinator',scanFlagged:false,scanFlaggedFields:[],scanNeedsRefund:null,scanDetectedCard:null,
+  pettyBal:2890,pettySpent:5610,
+  mgrAppr:7,mgrFlag:0,mgrSent:0,
+  finPc:2,finFl:0,finSl:2,finOb:0,finTot:591.90,
+  refillPending:false,refillAmt:0,refillCnt:0,
+  pendingPettyReceipts:[],
+  absType:'sick'
+};
+
+let coords=[
+  {id:1,name:'דנה שמש',  role:'רכזת שטח',email:'dana@ngo.il',  active:true, color:'#3A8FC8',ini:'דש',
+   reports:[
+     {id:101,vendor:'דומינוס', cat:'מזון', amt:180,  route:'petty',   icon:'\u1F355',date:'07/01',approved:false,flagged:false,conf:{vendor:95,date:92,amt:97}},
+     {id:102,vendor:'ארומה',   cat:'קפה',  amt:24,   route:'personal',icon:'\u2615',date:'06/01',approved:false,flagged:false,conf:{vendor:88,date:82,amt:91}},
+   ]},
+  {id:2,name:'שירה מנדל',role:'רכזת שטח',email:'shira@ngo.il', active:true, color:'#2BBFA0',ini:'שמ',
+   reports:[
+     {id:201,vendor:'רמי לוי', cat:'מזון', amt:156.4,route:'petty',   icon:'\uD83D\uDED2',date:'07/01',approved:false,flagged:true,conf:{vendor:88,date:41,amt:62},flagFields:['תאריך (41%)','סכום (62%)']},
+     {id:202,vendor:'נסיעות',  cat:'\u05E7\u05F4\u05DE',  amt:38,   route:'km',      icon:'\uD83D\uDE97',date:'05/01',approved:false,flagged:false,conf:null},
+   ]},
+  {id:3,name:'רוני אברהם',role:'רכזת שטח',email:'roni@ngo.il', active:true, color:'#7B5EA7',ini:'רא',
+   reports:[
+     {id:301,vendor:'סופר-פארם',cat:'ציוד',amt:95,   route:'petty',   icon:'\uD83C\uDFE5',date:'04/01',approved:false,flagged:false,conf:{vendor:93,date:88,amt:96}},
+   ]},
+  {id:4,name:'רות לוי',  role:'רכזת שטח',email:'ruth@ngo.il',  active:false,color:'#8090A0',ini:'רל',reports:[]},
+];
+
+let nextRid=400,nextMid=5;
+let teamMembers=coords.map(c=>({id:c.id,name:c.name,role:c.role,email:c.email,active:c.active}));
+// ══ LOGIN — single user, email+password ══
+function tpwd(){const f=document.getElementById('lp');f.type=f.type==='password'?'text':'password'}
+
+function doLogin(){
+  const u=document.getElementById('lu').value.trim().toLowerCase();
+  const p=document.getElementById('lp').value;
+  document.getElementById('lerr').style.display='none';
+  if(u!==ADMIN_EMAIL || p!==ADMIN_PASS){
+    document.getElementById('lerr').style.display='block';
+    document.getElementById('lcard').classList.add('shake');
+    setTimeout(()=>document.getElementById('lcard').classList.remove('shake'),400);
+    document.getElementById('lp').value='';
+    return;
+  }
+  S.username='יסמין'; S.role='coordinator'; S.loggedIn=true;
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+  document.getElementById('tbr').style.display='flex';
+  document.getElementById('tbname').textContent='יסמין';
+  document.getElementById('phonename').textContent='שלום יסמין';
+  document.getElementById('role-bar').classList.add('show');
+  switchRole('coordinator');
 }
 
-function openManualForm(type) {
-  aiFilledData = false;
-  document.getElementById("ai-filled-badge").style.display = "none";
-  document.getElementById("manual-edited-badge").style.display = "none";
-  var today = new Date().toISOString().split("T")[0];
-  document.getElementById("expense-date").value = today;
-  document.getElementById("expense-time").value = new Date().toTimeString().slice(0,5);
-  document.getElementById("expense-amount").value = "";
-  document.getElementById("expense-category").value = "food";
-  document.getElementById("expense-notes").value = "";
-  document.getElementById("expense-type").value = type || "petty";
-  openExpenseForm();
+function doLogout(){
+  ['coordinator','manager','finance','admin'].forEach(r=>{
+    const el=document.getElementById('panel-'+r);
+    if(el) el.classList.remove('active');
+  });
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('tbr').style.display='none';
+  document.getElementById('sbar').style.display='none';
+  document.getElementById('role-bar').classList.remove('show');
+  document.getElementById('screen-login').classList.add('active');
+  document.getElementById('lu').value='';
+  document.getElementById('lp').value='';
+  document.getElementById('lerr').style.display='none';
+  S.loggedIn=false;
 }
 
-function openExpenseForm() {
-  document.getElementById("expense-form-modal").classList.add("open");
+// ══ ROLE SWITCHER ══
+function switchRole(role){
+  S.role=role;
+  ['coordinator','manager','finance','admin'].forEach(r=>{
+    const el=document.getElementById('panel-'+r);
+    if(el) el.classList.remove('active');
+    const btn=document.getElementById('rbtn-'+r);
+    if(btn) btn.classList.remove('active');
+  });
+  const panel=document.getElementById('panel-'+role);
+  if(panel) panel.classList.add('active');
+  const rbtn=document.getElementById('rbtn-'+role);
+  if(rbtn) rbtn.classList.add('active');
+  document.getElementById('sbar').style.display=role==='coordinator'?'flex':'none';
+  if(role==='coordinator') setStep(1);
+  if(role==='manager') renderCoords();
+  if(role==='finance'){updateFinStats();renderPettySubmissions();}
+  if(role==='admin')   renderAdmin();
 }
 
-function closeExpenseForm() {
-  document.getElementById("expense-form-modal").classList.remove("open");
-  aiFilledData = false;
-}
-
-function markManual() {
-  if(aiFilledData) {
-    document.getElementById("manual-edited-badge").style.display = "block";
+// ══ STEP BAR ══
+function setStep(n){
+  for(let i=1;i<=3;i++){
+    const c=document.getElementById('sc'+i),l=document.getElementById('sl'+i),cn=document.getElementById('con'+i);
+    c.className='sc2';l.className='sl2';if(cn)cn.className='scon2';
+    if(i<n){c.className+=' done';c.textContent='\u2713';}
+    if(i===n){c.className+=' active';c.textContent=String(i);l.className+=' active';}
+    if(i===n-1&&cn)cn.className+=' done';
   }
 }
+let programs=[
+  {id:1, name:'תוכנית נוער בסיכון', icon:'\uD83E\uDDD1\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1', region:'מחוז תל אביב',pettyBudget:8500, color:'#3A8FC8',managers:[{id:'m1',name:'מיכל כהן',role:'מנהלת תוכנית',email:'michal@ngo.il'}],staffCount:3},
+  {id:2, name:'תוכנית קשישים בקהילה', icon:'\uD83E\uDDD3', region:'מחוז מרכז',pettyBudget:6500, color:'#2BBFA0',managers:[{id:'m2',name:'רחל אברהם',role:'מנהלת תוכנית',email:'rachel@ngo.il'}],staffCount:4},
+];
+let nextMgrId=3;
 
-function submitExpense() {
-  var amount = document.getElementById("expense-amount").value;
-  var type = document.getElementById("expense-type").value;
-  var cat = document.getElementById("expense-category");
-  var catText = cat.options[cat.selectedIndex].text;
-  if(!amount) { toast("יש להזין סכום", "err"); return; }
-  var typeLabels = {petty:"קופה קטנה", personal:"החזר אישי", card:"כרטיס עמותה"};
-  var newItem = document.createElement("div");
-  newItem.className = "expense-item";
-  var wasEdited = document.getElementById("manual-edited-badge").style.display !== "none";
-  var editTag = wasEdited ? " | ✏️ עודכן ידנית" : "";
-  newItem.innerHTML = "<div class=\"expense-info\"><div class=\"title\">" + catText + " - " + (typeLabels[type]||type) + editTag + "</div><div class=\"sub\">" + document.getElementById("expense-date").value + "</div></div><div style=\"display:flex;align-items:center;gap:8px\"><div class=\"expense-amount\">" + amount + " ₪</div><div class=\"traffic\">🟡</div></div>";
-  var list = document.getElementById("my-expenses-list");
-  list.insertBefore(newItem, list.firstChild);
-  closeExpenseForm();
-  toast("ההוצאה נשלחה לאישור 🟡", "ok");
+function updatePettyBar(){
+  const pct=Math.round(S.pettyBal/8500*100);
+  document.getElementById('petty-bal').textContent='\u20AA'+S.pettyBal.toLocaleString('he-IL');
+  document.getElementById('petty-pct').textContent=pct+'%';
+  document.getElementById('pfill').style.width=pct+'%';
+  document.getElementById('petty-spent').textContent='הוצאות החודש: \u20AA'+S.pettySpent.toLocaleString('he-IL');
+  const fill=document.getElementById('pfill');
+  fill.style.background=pct<20?'linear-gradient(90deg,var(--danger),#E05070)':pct<40?'linear-gradient(90deg,var(--warn),#E0A030)':'linear-gradient(90deg,var(--teal),#2BBFA0CC)';
+  document.getElementById('palert').classList.toggle('show',pct<30&&!S.refillPending);
 }
-function calcKm() {
-  var km = parseFloat(document.getElementById("km-amount").value) || 0;
-  var total = (km * 2.24).toFixed(2);
-  var calcDiv = document.getElementById("km-calc");
-  var totalEl = document.getElementById("km-total");
-  if(km > 0) {
-    calcDiv.style.display = "block";
-    totalEl.textContent = total + " ₪";
+
+function sendToFinance(){
+  const receipts=S.pendingPettyReceipts;
+  if(!receipts.length){toast('אין קבלות מאושרות לשליחה עדיין');return}
+  const total=receipts.reduce((s,r)=>s+r.amt,0);
+  const cnt=receipts.length;
+  S.refillPending=true; S.refillAmt=total; S.refillCnt=cnt;
+  receipts.forEach(r=>{addFinPettyRow(r.date,r.name,r.vendor,r.cat,r.amt,r.recData,r.flagged,r.flagFields,r.needsRefund);});
+  S.finPc+=cnt;
+  S.pendingPettyReceipts=[];
+  document.getElementById('palert').classList.remove('show');
+  document.getElementById('rf-sub').textContent='נשלחו '+cnt+' קבלות מאושרות לאישורך';
+  document.getElementById('rf-amt').textContent='\u20AA'+total.toFixed(2);
+  document.getElementById('rfcard').classList.add('show');
+  updateFinStats();
+  appendLog('<span class="lw2">> BULK_REFILL_REQUEST: '+cnt+' receipts (\u20AA'+total.toFixed(2)+') sent \u2192 awaiting Yossi approval</span>');
+  toast(cnt+' קבלות נשלחו ליוסי — \u20AA'+total.toFixed(2));
+}
+
+function approveRefill(){
+  document.getElementById('rfcard').classList.remove('show');
+  S.pettyBal+=S.refillAmt; S.refillPending=false;
+  updatePettyBar();
+  appendLog('<span class="lg">> REFILL_APPROVED: \u20AA'+S.refillAmt.toFixed(2)+' transferred — petty cash refilled</span>');
+  toast('\u2705 קופה חודשה! \u20AA'+S.refillAmt.toFixed(2)+' חזרו לקופה');
+}
+function renderCoords(){
+  updatePettyBar();
+  const list=document.getElementById('coordlist');list.innerHTML='';
+  let pending=0,flaggedCnt=0;
+  coords.filter(c=>c.active).forEach(c=>{c.reports.forEach(r=>{if(!r.approved){pending++;if(r.flagged)flaggedCnt++}});});
+  document.getElementById('mgr-pend').textContent=pending;
+  document.getElementById('mgr-flag').textContent=flaggedCnt;
+  const bdg=document.getElementById('mgrbdg');bdg.textContent=pending;bdg.style.display=pending>0?'inline':'none';
+  coords.filter(c=>c.active).forEach(coord=>{
+    const pr=coord.reports.filter(r=>!r.approved);
+    const flagged=pr.filter(r=>r.flagged);
+    const total=coord.reports.reduce((s,r)=>s+r.amt,0);
+    const div=document.createElement('div');
+    div.className='cc';div.id='cc-'+coord.id;
+    let pcClass='pc-ok',pcText='\u2713 הכל';
+    if(pr.length>0)pcClass='pc-pend',pcText=pr.length+' ממתינים';
+    if(flagged.length>0)pcClass='pc-flag',pcText='\u26A0\uFE0F '+flagged.length+' לבדיקה';
+    div.innerHTML=`<div class="cch" onclick="toggleCC(${coord.id})"><div class="ccl"><div class="ccav" style="background:${coord.color}18;color:${coord.color}">${coord.ini}</div><div><div class="ccname">${coord.name}</div><div class="ccmeta">${coord.role} \u00B7 ${coord.reports.length} דיווחים</div></div></div><div class="ccr"><div class="cctot">\u20AA${total.toFixed(2)}</div><span class="pc ${pcClass}">${pcText}</span><span class="chev">\u25BC</span></div></div><div class="ccbody" id="ccb-${coord.id}">${coord.reports.length===0?'<div style="padding:12px 15px;font-size:12px;color:var(--muted)">אין דיווחים</div>':coord.reports.map(r=>makeRow(r,coord)).join('')}</div>`;
+    list.appendChild(div);
+    if(flagged.length>0)div.classList.add('open');
+  });
+  if(!coords.filter(c=>c.active).length)
+    list.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;border:1.5px dashed var(--border);border-radius:var(--rsm)">אין רכזות פעילות</div>';
+}
+
+function makeRow(r,coord){
+  const tc=r.route==='petty'?'tp':r.route==='km'?'tk':'tr';
+  const tl=r.route==='petty'?'קופה':r.route==='km'?'\u05E7\u05F4\u05DE':'החזר';
+  const recData=r.conf?{vendor:r.vendor,date:r.date,cat:r.cat,amt:'\u20AA'+r.amt.toFixed(2),conf:r.conf,flagged:r.flagged,flagFields:r.flagFields||[]}:null;
+  const recBtn=recData?`<span class="rlnk" onclick='showRec(${JSON.stringify(recData)})' title="צפי בקבלה">\uD83E\uDDFE</span>`:`<span style="color:var(--muted);font-size:11px">—</span>`;
+  if(r.approved)
+    return `<div class="rrow done"><div class="rrl"><div class="rico" style="background:var(--ok-lt)">${r.icon||'\uD83D\uDED2'}</div><div><div class="rn">${r.vendor}</div><div class="rmeta">${r.date} \u00B7 <span class="tbdg2 ${tc}">${tl}</span></div></div></div><div class="rrr"><div class="ramt">\u20AA${r.amt.toFixed(2)}</div>${recBtn}<span class="okcheck">\u2713</span></div></div>`;
+  const rowClass='rrow'+(r.flagged?' flagged':'');
+  const flagBit=r.flagged?'<span class="flag-pill">\u26A0\uFE0F לבדיקה</span>':''; 
+  return `<div class="${rowClass}" id="rr-${r.id}"><div class="rrl"><div class="rico" style="background:${r.flagged?'var(--flag-lt)':'var(--bg)'}">${r.icon||'\uD83D\uDED2'}</div><div><div class="rn">${r.vendor}</div><div class="rmeta">${r.date} \u00B7 <span class="tbdg2 ${tc}">${tl}</span>${flagBit}</div></div></div><div class="rrr"><div class="ramt">\u20AA${r.amt.toFixed(2)}</div>${r.needsRefund===true?'<span class="refund-badge rb-yes">\uD83D\uDCB8 החזר</span>':r.needsRefund===false?'<span class="refund-badge rb-no">\u2713 ללא החזר</span>':''} ${recBtn}<button class="bok2" onclick="approveRep(${coord.id},${r.id},event)">\u2713 אשר</button></div></div>`;
+}
+
+function toggleCC(id){document.getElementById('cc-'+id).classList.toggle('open')}
+
+function approveRep(coordId,repId,evt){
+  evt.stopPropagation();
+  const coord=coords.find(c=>c.id===coordId),rep=coord.reports.find(r=>r.id===repId);
+  rep.approved=true;S.mgrAppr++;S.finTot+=rep.amt;
+  const today=new Date().toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'});
+  const recData=rep.conf?{vendor:rep.vendor,date:rep.date,cat:rep.cat,amt:'\u20AA'+rep.amt.toFixed(2),conf:rep.conf,flagged:rep.flagged,flagFields:rep.flagFields||[]}:null;
+  if(rep.route==='petty'){
+    S.pettyBal-=rep.amt; S.pettySpent+=rep.amt;
+    S.pendingPettyReceipts.push({date:today,name:coord.name,vendor:rep.vendor,cat:rep.cat,amt:rep.amt,recData,flagged:rep.flagged,flagFields:rep.flagFields||[],needsRefund:rep.needsRefund});
+    updateSendBtn();
+    appendLog(rep.flagged?'<span class="lf">> PETTY_APPROVED (FLAGGED): '+rep.vendor+' \u20AA'+rep.amt.toFixed(2)+'</span>':'<span class="lb">> PETTY_APPROVED: '+rep.vendor+' \u20AA'+rep.amt.toFixed(2)+'</span>');
+    toast(rep.flagged?'\u26A0\uFE0F \u20AA'+rep.amt.toFixed(2)+' אושרו — מסומן לבדיקה':'\uD83D\uDCB0 \u20AA'+rep.amt.toFixed(2)+' הופחתו מהקופה');
   } else {
-    calcDiv.style.display = "none";
+    const type=rep.route==='km'?'\u05E7\u05F4\u05DE':'החזר אישי';
+    addFinSalaryRow(today,coord.name,rep.vendor,type,rep.amt,recData,rep.flagged,rep.flagFields||[]);
+    if(rep.flagged)S.finFl++;
+    S.finSl++;
+    appendLog(rep.flagged?'<span class="lf">> SALARY+FLAG: '+coord.name+' '+type+' \u20AA'+rep.amt.toFixed(2)+'</span>':'<span class="lt">> SALARY_DIRECT: '+coord.name+' '+type+' \u20AA'+rep.amt.toFixed(2)+'</span>');
+    toast('\uD83D\uDCCB '+type+' של '+coord.name+' \u2192 תלוש שכר');
+  }
+  document.getElementById('mgr-appr').textContent=S.mgrAppr;
+  updateFinStats();renderCoords();updatePettyBar();setStep(3);
+}
+
+function updateSendBtn(){
+  const cnt=S.pendingPettyReceipts.length;
+  const tot=S.pendingPettyReceipts.reduce((s,r)=>s+r.amt,0);
+  const pct=Math.round(S.pettyBal/8500*100);
+  const alertEl=document.getElementById('palert');
+  if(cnt>0){
+    alertEl.classList.add('show');
+    alertEl.querySelector('.palert-txt').textContent=pct<30?' \u26A0\uFE0F הקופה מתרוקנת — '+cnt+' קבלות (\u20AA'+tot.toFixed(0)+') מוכנות לשליחה':' \uD83D\uDCCB '+cnt+' קבלות (\u20AA'+tot.toFixed(0)+') — שלחי ליוסי';
+  } else if(pct>=30){
+    alertEl.classList.remove('show');
+  }
+}
+function addFinPettyRow(date,name,vendor,cat,amt,recData,flagged,flagFields,needsRefund){
+  const tbody=document.getElementById('tbody-pc');
+  const tr=document.createElement('tr');
+  tr.className=(flagged?'frow ':'')+ 'rn2';
+  const recBtn=recData?`<span class="rlnk2" onclick='showRec(${JSON.stringify(recData)})'>\uD83E\uDDFE</span>`:' — ';
+  const statusCell=flagged?'<span class="tbdg2" style="background:var(--flag-lt);color:var(--flag)">\u26A0\uFE0F לבדיקה</span>':'<span class="bdg bok">מאושר</span>';
+  const refundBadge=needsRefund===true?'<span class="refund-badge rb-yes">\uD83D\uDCB8 להחזר</span>':needsRefund===false?'<span class="refund-badge rb-no">\u2713 ללא</span>':'<span style="color:var(--muted);font-size:10px">—</span>';
+  tr.innerHTML=`<td>${date}</td><td style="font-weight:600">${name}</td><td>${vendor}</td><td>${cat}</td><td class="mono">\u20AA${amt.toFixed(2)}</td><td>${refundBadge}</td><td>${recBtn}</td><td>${statusCell}</td>`;
+  tbody.insertBefore(tr,tbody.firstChild);
+  if(flagged){
+    const tf=document.getElementById('tbody-fl');
+    if(tf.rows.length===1&&tf.rows[0].cells.length===1)tf.innerHTML='';
+    const tr2=document.createElement('tr');tr2.className='frow rfl';
+    const fields=flagFields.length?flagFields.join(', '):'שדות לא ברורים';
+    tr2.innerHTML=`<td>${date}</td><td style="font-weight:600">${name}</td><td>${vendor}</td><td class="mono">\u20AA${amt.toFixed(2)}</td><td style="color:var(--flag);font-size:10px">${fields}</td><td>${recBtn}</td><td><span class="tbdg2" style="background:var(--flag-lt);color:var(--flag)">\u26A0\uFE0F בבדיקה</span></td>`;
+    tf.insertBefore(tr2,tf.firstChild);
+    S.finFl++;
   }
 }
 
-function submitKm() {
-  var from = document.getElementById("km-from").value;
-  var to = document.getElementById("km-to").value;
-  var km = document.getElementById("km-amount").value;
-  if(!from || !to || !km) { toast("מלא את כל שדות הנסיעה", "err"); return; }
-  toast("דיווח ק״מ נשלח! " + km + " ק״מ = " + (km*2.24).toFixed(2) + " ₪", "ok");
-  document.getElementById("km-from").value = "";
-  document.getElementById("km-to").value = "";
-  document.getElementById("km-amount").value = "";
-  document.getElementById("km-calc").style.display = "none";
+function addFinSalaryRow(date,name,vendor,type,amt,recData,flagged,flagFields){
+  const tbody=document.getElementById('tbody-sl');
+  const tr=document.createElement('tr');tr.className=(flagged?'frow ':'')+ 'rs2';
+  const recBtn=recData?`<span class="rlnk2" onclick='showRec(${JSON.stringify(recData)})'>\uD83E\uDDFE</span>`:' — ';
+  const tc=type==='\u05E7\u05F4\u05DE'?'tk':'tr';
+  const statusCell=flagged?'<span class="tbdg2" style="background:var(--flag-lt);color:var(--flag)">\u26A0\uFE0F לבדיקה</span>':'<span class="bdg bpd">ינואר</span>';
+  tr.innerHTML=`<td>${date}</td><td style="font-weight:600">${name}</td><td><span class="tbdg2 ${tc}">${type}</span></td><td>${vendor}</td><td class="mono">\u20AA${amt.toFixed(2)}</td><td>${recBtn}</td><td>${statusCell}</td>`;
+  tbody.insertBefore(tr,tbody.firstChild);
+  if(flagged){
+    const tf=document.getElementById('tbody-fl');
+    if(tf.rows.length===1&&tf.rows[0].cells.length===1)tf.innerHTML='';
+    const tr2=document.createElement('tr');tr2.className='frow rfl';
+    const fields=flagFields.length?flagFields.join(', '):'שדות לא ברורים';
+    tr2.innerHTML=`<td>${date}</td><td style="font-weight:600">${name}</td><td>${vendor}</td><td class="mono">\u20AA${amt.toFixed(2)}</td><td style="color:var(--flag);font-size:10px">${fields}</td><td>${recBtn}</td><td><span class="tbdg2" style="background:var(--flag-lt);color:var(--flag)">\u26A0\uFE0F בבדיקה</span></td>`;
+    tf.insertBefore(tr2,tf.firstChild);
+    S.finFl++;
+  }
 }
 
-function startClock() {
-  if(clockInterval) clearInterval(clockInterval);
-  clockInterval = setInterval(function(){
-    var el = document.getElementById("live-clock");
-    if(el) el.textContent = new Date().toTimeString().slice(0,8);
-  }, 1000);
-  var el = document.getElementById("live-clock");
-  if(el) el.textContent = new Date().toTimeString().slice(0,8);
+function updateFinStats(){
+  const pendingSubs=pettySubmissions.filter(s=>s.status==='pending').length;
+  const pendingSal=salaryEmployees.filter(e=>!e.payrollDone).length;
+  const flagCount=pettySubmissions.flatMap(s=>s.receipts.filter(r=>r.flagged)).length;
+  const total=pettySubmissions.reduce((s,p)=>s+p.total,0)+salaryEmployees.reduce((s,e)=>s+e.items.reduce((x,i)=>x+i.amt,0),0);
+  document.getElementById('ystat-petty').textContent=pendingSubs;
+  document.getElementById('ystat-sal').textContent=pendingSal;
+  document.getElementById('ystat-flag').textContent=flagCount;
+  document.getElementById('ystat-total').textContent='\u20AA'+Math.round(total/100)*100;
+  document.getElementById('ycnt-petty').textContent=pendingSubs;
+  document.getElementById('ycnt-salary').textContent=pendingSal;
+  document.getElementById('ycnt-flag').textContent=flagCount;
 }
 
-function punchIn() {
-  punchInTime = new Date();
-  var h = punchInTime.toTimeString().slice(0,5);
-  document.getElementById("punch-status").textContent = "מחובר מ-" + h;
-  document.getElementById("btn-punch-in").style.display = "none";
-  document.getElementById("btn-punch-out").style.display = "inline-block";
-  toast("כניסה נרשמה: " + h, "ok");
+const pettySubmissions=[
+  {id:'ps1', program:'נוער בסיכון', progIcon:'\uD83E\uDDD1\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1', progColor:'#3A8FC8',manager:'מיכל כהן', month:'ינואר 2026', total:2460,status:'pending',
+   receipts:[{date:'02/01/26',vendor:'רמי לוי בשכונה',cat:'מזון',amt:500,icon:'\uD83D\uDED2',conf:{vendor:94,date:91,amt:96},flagged:false},{date:'05/01/26',vendor:'חשמלאי',cat:'שירותים',amt:1000,icon:'\uD83D\uDD27',conf:{vendor:88,date:85,amt:90},flagged:false},{date:'28/01/26',vendor:'ציוד למרכז',cat:'ציוד',amt:960,icon:'\uD83D\uDCE6',conf:{vendor:92,date:89,amt:40},flagged:true,flagFields:['סכום (40%)']}]},
+  {id:'ps2', program:'קשישים בקהילה', progIcon:'\uD83E\uDDD3', progColor:'#2BBFA0',manager:'רחל אברהם', month:'ינואר 2026', total:1820,status:'pending',
+   receipts:[{date:'08/01/26',vendor:'סופר-פארם',cat:'ציוד',amt:320,icon:'\uD83C\uDFE5',conf:{vendor:93,date:90,amt:95},flagged:false},{date:'15/01/26',vendor:'מסעדת הים',cat:'מזון',amt:850,icon:'\uD83C\uDF7D\uFE0F',conf:{vendor:90,date:88,amt:92},flagged:false},{date:'22/01/26',vendor:'קניית ריהוט',cat:'ציוד',amt:650,icon:'\uD83E\uDE91',conf:{vendor:85,date:82,amt:88},flagged:false}]},
+];
+
+const salaryEmployees=[
+  {id:'e1', name:'דנה שמש', program:'נוער בסיכון', ini:'דש',month:'ינואר 2026',managerApproved:true,payrollDone:false,
+   items:[{type:'\u05E7\u05F4\u05DE',desc:'42 \u05E7\u05F4\u05DE',amt:63,receipt:false},{type:'החזר',desc:'ארומה',amt:24,receipt:true,conf:{vendor:88,date:85,amt:92}},{type:'חנייה',desc:'חנייה רמת גן',amt:18,receipt:true,conf:{vendor:72,date:68,amt:75}}]},
+  {id:'e2', name:'שירה מנדל', program:'נוער בסיכון', ini:'שמ',month:'ינואר 2026',managerApproved:true,payrollDone:false,
+   items:[{type:'\u05E7\u05F4\u05DE',desc:'28 \u05E7\u05F4\u05DE',amt:42,receipt:false},{type:'החזר',desc:'קפה ועוגה',amt:36,receipt:true,conf:{vendor:91,date:88,amt:94}}]},
+  {id:'e3', name:'מיכל כהן', program:'נוער בסיכון', ini:'מכ',month:'ינואר 2026',managerApproved:true,payrollDone:false,
+   items:[{type:'\u05E7\u05F4\u05DE',desc:'89 \u05E7\u05F4\u05DE',amt:133.5,receipt:false},{type:'החזר',desc:'מסעדה',amt:85,receipt:true,conf:{vendor:93,date:90,amt:95}},{type:'חנייה',desc:'חנייה תל אביב',amt:32,receipt:true,conf:{vendor:80,date:77,amt:83}}]},
+];
+
+function yossiTab(tab,el){
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['petty','salary','flag'].forEach(t=>document.getElementById('ytab-'+t).style.display=t===tab?'block':'none');
+  if(tab==='petty')  renderPettySubmissions();
+  if(tab==='salary') renderSalaryEmployees();
+  if(tab==='flag')   renderFlagged();
+}
+function renderPettySubmissions(){
+  const wrap=document.getElementById('petty-submissions');wrap.innerHTML='';
+  pettySubmissions.forEach(sub=>{
+    const approved=sub.status==='approved';
+    const flagCount=sub.receipts.filter(r=>r.flagged).length;
+    const div=document.createElement('div');div.className='psub-card';div.id='psub-'+sub.id;
+    div.innerHTML=`<div class="psub-hdr" onclick="toggleSub('${sub.id}')"><div class="psub-l"><div class="psub-prog" style="background:${sub.progColor}18">${sub.progIcon}</div><div><div class="psub-title">${sub.program} — ${sub.month}</div><div class="psub-meta">מנהלת: ${sub.manager} · ${sub.receipts.length} קבלות${flagCount>0?' · <span style="color:var(--flag)">\u26A0\uFE0F '+flagCount+' לבדיקה</span>':''}</div></div></div><div class="psub-r"><div class="psub-total" style="color:${sub.progColor}">\u20AA${sub.total.toLocaleString()}</div><span class="psub-status ${approved?'pss-ok':'pss-wait'}">${approved?'\u2713 אושר':'ממתין לאישור'}</span><span class="psub-chevron">\u25BC</span></div></div><div class="psub-body" id="psub-body-${sub.id}">${sub.receipts.map(r=>{const bg=r.cat==='מזון'?'#FEF3E8':r.cat==='שירותים'?'#EAF4FC':'var(--bg)';const recBtn=r.conf?`<span class="rec-scan" onclick='showRec({vendor:"${r.vendor}",date:"${r.date}",cat:"${r.cat}",amt:"\u20AA${r.amt.toFixed(2)}",conf:${JSON.stringify(r.conf)},flagged:${r.flagged},flagFields:${JSON.stringify(r.flagFields||[])}})'>\uD83E\uDDFE</span>`:'<span style="font-size:11px;color:var(--muted)">—</span>';return `<div class="rec-row2${r.flagged?' flagged2':''}"><div class="rec-l2"><div class="rec-date">${r.date}</div><div class="rec-cat-icon" style="background:${bg}">${r.icon}</div><div><div class="rec-vendor">${r.vendor}</div><div class="rec-cat">${r.cat}</div></div></div><div class="rec-r2"><div class="rec-amt2">\u20AA${r.amt.toFixed(2)}</div>${recBtn}</div></div>`;}).join('')}<div class="psub-footer"><div class="psub-footer-total">סה"כ: <strong>\u20AA${sub.total.toLocaleString()}</strong></div><button class="btn-approve-sub" ${approved?'disabled':''} onclick="approveSub('${sub.id}',event)">${approved?'\u2713 אושר':'\u2713 אשר ושלח למנהלת'}</button></div></div>`;
+    wrap.appendChild(div);
+  });
 }
 
-function punchOut() {
-  if(!punchInTime) return;
-  var now = new Date();
-  var diff = Math.round((now - punchInTime) / 60000);
-  var h = Math.floor(diff/60);
-  var m = diff % 60;
-  var outTime = now.toTimeString().slice(0,5);
-  document.getElementById("punch-status").textContent = "לא מחובר";
-  document.getElementById("btn-punch-in").style.display = "inline-block";
-  document.getElementById("btn-punch-out").style.display = "none";
-  toast("יציאה: " + outTime + " | " + h + " ש' " + m + " ד'", "ok");
-  punchInTime = null;
+function toggleSub(id){document.getElementById('psub-'+id).classList.toggle('open')}
+
+function approveSub(id,evt){
+  evt.stopPropagation();
+  const sub=pettySubmissions.find(s=>s.id===id);sub.status='approved';
+  renderPettySubmissions();
+  document.getElementById('psub-'+id).classList.add('open');
+  appendLog('<span class="lg">> PETTY_APPROVED: '+sub.program+' \u20AA'+sub.total+'</span>');
+  toast('\u2705 \u20AA'+sub.total.toLocaleString()+' אושרו ל'+sub.manager);
 }
 
-function approveItem(btn, status) {
-  var item = btn.closest(".expense-item");
-  var trafficEl = item.querySelector(".traffic");
-  if(status === "green") {
-    trafficEl.textContent = "🟢";
-    toast("הוצאה אושרה ✓", "ok");
+function renderSalaryEmployees(){
+  const wrap=document.getElementById('salary-employees');wrap.innerHTML='';
+  salaryEmployees.forEach(emp=>{
+    const total=emp.items.reduce((s,i)=>s+i.amt,0);
+    const div=document.createElement('div');div.className='emp-card';div.id='emp-'+emp.id;
+    div.innerHTML=`<div class="emp-hdr" onclick="toggleEmp('${emp.id}')"><div class="emp-l"><div class="emp-av">${emp.ini}</div><div><div class="emp-name">${emp.name}</div><div class="emp-meta">${emp.program} · ${emp.month}</div></div></div><div class="emp-r"><div class="emp-total">\u20AA${total.toFixed(2)}</div><span class="psub-status ${emp.payrollDone?'pss-ok':'pss-wait'}">${emp.payrollDone?'\u2713 בתלוש':'ממתין'}</span><span class="psub-chevron">\u25BC</span></div></div><div class="emp-body" id="emp-body-${emp.id}">${emp.items.map(item=>{const tc=item.type==='\u05E7\u05F4\u05DE'?'tk':'tr';return `<div class="sal-item"><div class="sal-l"><span class="sal-type tbdg2 ${tc}">${item.type}</span><div class="sal-desc">${item.desc}${emp.managerApproved?' <span class="mgr-approved-badge">\u2713 מנהלת</span>':''}</div></div><div class="sal-r"><div class="sal-amt">\u20AA${item.amt.toFixed(2)}</div></div></div>`;}).join('')}<div class="emp-footer"><div style="font-size:12px;color:var(--muted)">סה"כ: <strong style="font-family:var(--mono)">\u20AA${total.toFixed(2)}</strong></div><button class="btn-payroll" ${!emp.managerApproved||emp.payrollDone?'disabled':''} onclick="markPayroll('${emp.id}',event)">${emp.payrollDone?'\u2713 בתלוש':'\u2295 הוסף לתלוש'}</button></div></div>`;
+    wrap.appendChild(div);
+  });
+}
+
+function toggleEmp(id){document.getElementById('emp-'+id).classList.toggle('open')}
+
+function markPayroll(id,evt){
+  evt.stopPropagation();
+  const emp=salaryEmployees.find(e=>e.id===id);emp.payrollDone=true;
+  const total=emp.items.reduce((s,i)=>s+i.amt,0);
+  renderSalaryEmployees();document.getElementById('emp-'+id).classList.add('open');
+  appendLog('<span class="lg">> PAYROLL: '+emp.name+' \u20AA'+total.toFixed(2)+'</span>');
+  toast('\uD83D\uDCBC '+emp.name+' — \u20AA'+total.toFixed(2)+' לתלוש');
+}
+
+function renderFlagged(){
+  const wrap=document.getElementById('flagged-list');wrap.innerHTML='';
+  const allFlagged=pettySubmissions.flatMap(sub=>sub.receipts.filter(r=>r.flagged).map(r=>({...r,program:sub.program,manager:sub.manager})));
+  if(!allFlagged.length){wrap.innerHTML='<div style="padding:28px;text-align:center;color:var(--muted);font-size:13px;border:1.5px dashed var(--border);border-radius:var(--rsm)">אין קבלות מסומנות \u2713</div>';return;}
+  allFlagged.forEach(r=>{
+    const div=document.createElement('div');div.className='flag-item';
+    const recBtn=r.conf?`<span class="rec-scan" onclick='showRec({vendor:"${r.vendor}",date:"${r.date}",cat:"${r.cat}",amt:"\u20AA${r.amt.toFixed(2)}",conf:${JSON.stringify(r.conf)},flagged:true,flagFields:${JSON.stringify(r.flagFields||[])}})'>\uD83E\uDDFE צפה</span>`:'';
+    div.innerHTML=`<div class="flag-info"><div class="flag-title">\u26A0\uFE0F ${r.vendor}</div><div class="flag-fields">שדות: ${(r.flagFields||[]).join(', ')}</div><div class="flag-meta">${r.date} · ${r.cat} · ${r.program}</div></div><div class="flag-r"><div class="flag-amt3">\u20AA${r.amt.toFixed(2)}</div>${recBtn}</div>`;
+    wrap.appendChild(div);
+  });
+}
+function exportCSV(type){
+  const now=new Date().toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'2-digit'}).replace(/\//g,'-');
+  const escape=v=>{const s=String(v||'');return s.includes(',')||s.includes('"')?('"'+s.replace(/"/g,'""')+'"'):s;};
+  const buildCSV=(headers,rows)=>'\uFEFF'+headers.map(escape).join(',')+'\n'+rows.map(r=>r.map(escape).join(',')).join('\n');
+  let csv='',filename='';
+  if(type==='petty'){
+    filename='קופה_קטנה_'+now+'.csv';
+    csv=buildCSV(['תוכנית','מנהלת','תאריך','ספק','קטגוריה','סכום','סטטוס'],pettySubmissions.flatMap(sub=>sub.receipts.map(r=>[sub.program,sub.manager,r.date,r.vendor,r.cat,r.amt.toFixed(2),r.flagged?'לבדיקה':'תקין'])));
+  } else if(type==='salary'){
+    filename='החזרים_'+now+'.csv';
+    csv=buildCSV(['עובדת','סוג','פירוט','סכום','חודש'],salaryEmployees.flatMap(emp=>emp.items.map(item=>[emp.name,item.type,item.desc,item.amt.toFixed(2),emp.month])));
   } else {
-    trafficEl.textContent = "🔴";
-    toast("הוצאה נדחתה", "err");
+    filename='דוח_מלא_'+now+'.csv';
+    const totalP=pettySubmissions.reduce((s,p)=>s+p.total,0);
+    const totalS=salaryEmployees.reduce((s,e)=>s+e.items.reduce((x,i)=>x+i.amt,0),0);
+    csv=buildCSV(['סוג','סה"כ'],[["קופה קטנה",totalP.toFixed(2)],['החזרים',totalS.toFixed(2)],['סה"כ',(totalP+totalS).toFixed(2)]]);
   }
-  var btns = item.querySelectorAll(".btn-sm");
-  btns.forEach(function(b){ b.style.display = "none"; });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  toast('\u2B07 מוריד: '+filename);
+  appendLog('<span class="lg">> EXPORT: '+filename+'</span>');
 }
 
-function renewFund() {
-  toast("בקשת חידוש קופה נשלחה לכספים!", "ok");
+function renderAdmin(){
+  const list=document.getElementById('programs-list');list.innerHTML='';
+  document.getElementById('ov-progs').textContent=programs.length;
+  document.getElementById('ov-mgrs').textContent=programs.reduce((s,p)=>s+p.managers.length,0);
+  document.getElementById('ov-coords').textContent=programs.reduce((s,p)=>s+p.staffCount,0);
+  document.getElementById('ov-budget').textContent='\u20AA'+Math.round(programs.reduce((s,p)=>s+p.pettyBudget,0)/1000)+'K';
+  programs.forEach(prog=>{
+    const div=document.createElement('div');div.className='prog-card';
+    const mgrsHtml=prog.managers.length===0?'<div style="background:var(--warn-lt);border-radius:8px;padding:10px;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:var(--warn)">\u26A0\uFE0F אין מנהלת — אישורים לכספים</div></div>':prog.managers.map(m=>'<div class="mgr-row"><div class="mgr-l"><div class="mgr-av">'+m.name.split(' ').map(w=>w[0]).join('').slice(0,2)+'</div><div><div class="mgr-name">'+m.name+'</div><div class="mgr-role">'+m.role+'</div></div></div><div class="mgr-r"><button class="btn-remove" onclick="removeMgr('+prog.id+',\'\')">הסר</button></div></div>').join('');
+    div.innerHTML='<div class="prog-hdr"><div class="prog-left"><div class="prog-icon" style="background:'+prog.color+'18">'+prog.icon+'</div><div><div class="prog-name">'+prog.name+'</div><div class="prog-meta">'+prog.region+' · '+prog.staffCount+' אנשי צוות</div></div></div><div class="prog-right"><div class="prog-stat"><div class="prog-stat-val" style="color:var(--teal)">\u20AA'+prog.pettyBudget.toLocaleString()+'</div><div class="prog-stat-lbl">תקציב</div></div></div></div><div class="prog-body"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:10px">מנהלות תוכנית</div>'+mgrsHtml+'<div class="prog-add-mgr"><button class="btn-add-mgr" onclick="toggleAddMgr('+prog.id+')">+ הוספת מנהלת</button><div class="add-mgr-form" id="addmgr-'+prog.id+'"><div class="g2" style="margin-bottom:8px"><div><label class="flbl">שם</label><input type="text" id="nm-'+prog.id+'" class="fi" placeholder="שם מלא"></div><div><label class="flbl">אימייל</label><input type="email" id="ne-'+prog.id+'" class="fi" placeholder="name@org.il" style="direction:ltr;text-align:left"></div></div><div style="display:flex;gap:7px"><button class="btncfm" onclick="addMgr('+prog.id+')">\u2713 הוסף</button><button class="btncnl" onclick="toggleAddMgr('+prog.id+')">ביטול</button></div></div></div></div>';
+    list.appendChild(div);
+  });
 }
 
-function showPettyHistory() {
-  toast("היסטוריית קופה - בפיתוח", "info");
+function toggleAddMgr(progId){const f=document.getElementById('addmgr-'+progId);f.style.display=f.style.display==='block'?'none':'block';}
+function addMgr(progId){
+  const name=document.getElementById('nm-'+progId).value.trim();
+  if(!name)return;
+  const email=document.getElementById('ne-'+progId).value.trim();
+  const prog=programs.find(p=>p.id===progId);
+  prog.managers.push({id:'m'+nextMgrId++,name,role:'מנהלת תוכנית',email:email||name.split(' ')[0].toLowerCase()+'@ngo.il'});
+  renderAdmin();toast('\u2705 '+name+' — גישת מנהלת');
+}
+function removeMgr(progId,mgrId){
+  const prog=programs.find(p=>p.id===progId);
+  if(!prog) return;
+  if(prog.managers.length===1){if(!confirm('הסרת המנהלת האחרונה — להמשיך?'))return;}
+  prog.managers=prog.managers.filter(m=>m.id!==mgrId);
+  renderAdmin();
+}
+function switchMgrTab(tab,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  document.getElementById('mgrtab-approvals').style.display=tab==='approvals'?'block':'none';
+  document.getElementById('mgrtab-team').style.display=tab==='team'?'block':'none';
+  if(tab==='team')renderTeam();
+}
+function renderTeam(){
+  const list=document.getElementById('teamlist');list.innerHTML='';
+  document.getElementById('tmon').textContent=teamMembers.filter(m=>m.active).length;
+  document.getElementById('tmoff').textContent=teamMembers.filter(m=>!m.active).length;
+  [...teamMembers.filter(m=>m.active),...teamMembers.filter(m=>!m.active)].forEach(m=>{
+    const ini=m.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+    const d=document.createElement('div');
+    d.className=m.active?'tm':'tm off';
+    d.innerHTML='<div class="tml"><div class="tmav '+( m.active?'av-on':'av-off')+'">'+ ini+'</div><div><div class="tmname">'+m.name+'</div><div class="tmrole">'+m.role+'</div><div class="tmemail">'+m.email+'</div></div></div><div class="tmr"><span class="sb '+(m.active?'sb-on':'sb-off')+(m.active?'>פעיל/ה</span>':'>לא פעיל/ה</span>')+'<label class="tog"><input type="checkbox" '+(m.active?'checked':'')+' onchange="toggleM('+ m.id+',this.checked)"><div class="tt"></div><div class="tth"></div></label></div>';
+    list.appendChild(d);
+  });
+}
+function toggleM(id,active){
+  const m=teamMembers.find(x=>x.id===id);m.active=active;
+  const c=coords.find(x=>x.id===id);if(c)c.active=active;
+  toast(active?'\u2705 '+m.name+' הוחזרה':'\uD83D\uDD34 '+m.name+' הוסרה');
+  renderTeam();
+}
+function openAdd(){document.getElementById('afrm').style.display='block';}
+function closeAdd(){document.getElementById('afrm').style.display='none';document.getElementById('nn').value='';}
+function addMember(){
+  const name=document.getElementById('nn').value.trim();if(!name)return;
+  const role=document.getElementById('nr').value,email=document.getElementById('ne').value.trim()||name.split(' ')[0].toLowerCase()+'@ngo.il';
+  teamMembers.push({id:nextMid++,name,role,email,active:true});
+  coords.push({id:nextMid-1,name,role,email,active:true,color:'#3A8FC8',ini:name.split(' ').map(w=>w[0]).join('').slice(0,2),reports:[]});
+  closeAdd();renderTeam();toast('\u2705 '+name+' נוספה');
+}
+let scanScenario=0;
+function openScan(who){
+  S.scanFor=who;S.scanFlagged=false;S.scanFlaggedFields=[];S.scanNeedsRefund=null;S.scanDetectedCard=null;
+  document.getElementById('refund-q').style.display='none';
+  document.getElementById('rq-detected').style.display='none';
+  document.getElementById('rq-ask').style.display='none';
+  document.querySelectorAll('.rq-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('scanov').classList.add('open');
+  document.getElementById('aform').style.display='none';
+  document.getElementById('rbox').style.display='flex';
+  document.getElementById('scan-title').textContent='מנוע AI — סריקת קבלה';
+  document.getElementById('scan-sub').innerHTML='<span class="dots"><span></span><span></span><span></span></span>&nbsp;מנתח...';
+  document.getElementById('flag-warn').classList.remove('show');
+  document.getElementById('scan-submit').className='btn-sub normal';
+  document.getElementById('scan-submit').textContent=who==='manager'||who==='finance'||who==='admin'?'\u2705 שמרי הוצאה':'\u2705 שלחי למנהלת לאישור';
+  ['fa','fd','fv'].forEach(id=>{document.getElementById(id).value='';document.getElementById(id).className='ai';});
+  setTimeout(runScan,1200);
 }
 
-function addProject() {
-  var name = prompt("שם פרויקט חדש:");
-  if(name) toast("פרויקט \"" + name + "\" נוצר!", "ok");
+function runScan(){
+  document.getElementById('scan-sub').innerHTML='<span class="dots"><span></span><span></span><span></span></span>&nbsp;מחלץ נתונים...';
+  setTimeout(()=>{
+    document.getElementById('rbox').style.display='none';
+    const unclear=(scanScenario%2===1);scanScenario++;
+    if(unclear){
+      document.getElementById('scan-title').textContent='\u26A0\uFE0F זיהוי חלקי';
+      document.getElementById('scan-sub').textContent='2 שדות לא ברורים';
+      typeF('fa','???',55);document.getElementById('conf-amt').className='conf-lo';document.getElementById('conf-amt').textContent='? לא ברור (38%)';document.getElementById('fa').className='ai lc';
+      setTimeout(()=>{typeF('fd','??/01/25',55);document.getElementById('conf-date').className='conf-lo';document.getElementById('conf-date').textContent='? לא ברור (45%)';document.getElementById('fd').className='ai lc';},350);
+      setTimeout(()=>{typeF('fv','מסעדת הצוק',55);document.getElementById('conf-vendor').className='conf-ok';document.getElementById('conf-vendor').textContent='\u2713 ברור (89%)';},650);
+      S.scanFlagged=true;S.scanFlaggedFields=['סכום (38%)','תאריך (45%)'];
+      setTimeout(()=>{document.getElementById('fw-list').innerHTML=S.scanFlaggedFields.map(f=>'<li>\u2022 '+f+'</li>').join('');document.getElementById('flag-warn').classList.add('show');document.getElementById('scan-submit').className='btn-sub flagged-sub';document.getElementById('scan-submit').textContent='\u26A0\uFE0F שלחי עם סימון לבדיקה';},1100);
+    } else {
+      document.getElementById('scan-title').textContent='\u2713 זיהוי הושלם';
+      document.getElementById('scan-sub').textContent='3 שדות זוהו בבהירות';
+      ['conf-amt','conf-date','conf-vendor'].forEach(id=>{document.getElementById(id).className='conf-ok';});
+      document.getElementById('conf-amt').textContent='\u2713 ברור (96%)';document.getElementById('conf-date').textContent='\u2713 ברור (91%)';document.getElementById('conf-vendor').textContent='\u2713 ברור (94%)';
+      typeF('fa','\u20AA 156.40',55);setTimeout(()=>typeF('fv','רמי לוי',55),380);setTimeout(()=>typeF('fd','07/01/25',55),700);
+      S.scanFlagged=false;S.scanFlaggedFields=[];
+    }
+    document.getElementById('aform').style.display='block';
+    const detectedLast4=unclear?null:'1234';
+    const knownCard=detectedLast4?KNOWN_CARDS.find(c=>c.last4===detectedLast4):null;
+    const rqEl=document.getElementById('refund-q'),rqDetected=document.getElementById('rq-detected'),rqAsk=document.getElementById('rq-ask');
+    rqEl.style.display='block';
+    if(knownCard){
+      S.scanDetectedCard=knownCard;S.scanNeedsRefund=false;
+      rqDetected.style.display='flex';
+      rqDetected.innerHTML='\uD83D\uDCB3 זוהה: '+knownCard.label+' — <strong style="margin-right:5px">לא נדרש החזר</strong>';
+      rqAsk.style.display='none';
+    } else {
+      S.scanDetectedCard=null;S.scanNeedsRefund=null;
+      rqDetected.style.display='none';rqAsk.style.display='block';
+    }
+  },900);
 }
 
-function addUser() {
-  toast("הוספת משתמש - בפיתוח", "info");
+function typeF(id,txt,spd){const el=document.getElementById(id);el.value='';let i=0;function n(){if(i<txt.length){el.value+=txt[i++];setTimeout(n,spd)}}n()}
+function closeScan(){document.getElementById('scanov').classList.remove('open')}
+function setRefund(val){
+  S.scanNeedsRefund=val;
+  document.querySelectorAll('.rq-btn').forEach(b=>b.classList.remove('sel'));
+  document.querySelector(val?'.rq-yes':'.rq-no').classList.add('sel');
+  document.getElementById('rq-ask').classList.remove('rq-err');
+}
+function selR(el,r){document.querySelectorAll('.ro').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');S.scanRoute=r}
+
+function submitExpense(){
+  const amt=parseFloat(document.getElementById('fa').value.replace('\u20AA','').replace(/\?/g,'').replace(' ','')||'0');
+  const vendor=document.getElementById('fv').value||'ספק לא ידוע';
+  const rawDate=document.getElementById('fd').value.trim();
+  if(S.scanNeedsRefund===null){const rqAsk=document.getElementById('rq-ask');if(rqAsk.style.display!=='none'){rqAsk.classList.add('rq-err');toast('\u26A0\uFE0F יש לסמן האם שולם מכיסך');return;}}
+  const date=rawDate||new Date().toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'});
+  const route=S.scanRoute;
+  const cat=document.getElementById('fc').options[document.getElementById('fc').selectedIndex].text.split(' ')[1]||'כללי';
+  const flagged=S.scanFlagged;const flagFields=[...S.scanFlaggedFields];
+  closeScan();
+  const today=new Date().toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'});
+  const amtFinal=amt||0;
+  const conf=flagged?{vendor:89,date:45,amt:38}:{vendor:94,date:91,amt:96};
+  const needsRefund=S.scanNeedsRefund;
+  if(S.scanFor==='coordinator'){
+    const newR={id:nextRid++,vendor,cat,amt:amtFinal,route,icon:'\uD83D\uDED2',date:today,approved:false,flagged,flagFields,conf,needsRefund};
+    coords[0].reports.push(newR);
+    const elist=document.getElementById('explist');
+    const el=document.createElement('div');el.className='ei'+(flagged?' flag-ei':'');el.style.animation='fadein .3s';
+    const rl=route==='petty'?'קופה':route==='km'?'\u05E7\u05F4\u05DE':'החזר';
+    el.innerHTML='<div class="ei-l"><div class="ei-ico" style="background:'+( flagged?'var(--flag-lt)':'var(--blue-lt)')+'">\uD83D\uDED2</div><div><div class="ei-n">'+vendor+'</div><div class="ei-m">'+rl+(flagged?' \u26A0\uFE0F':'')+'</div></div></div><div class="ei-r"><div class="ei-a">\u20AA'+amtFinal.toFixed(2)+'</div><span class="bdg '+(flagged?'bflag':'bnw')+'">'+( flagged?'\u26A0\uFE0F לבדיקה':'חדש')+'</span></div>';
+    elist.insertBefore(el,elist.firstChild);
+    setStep(2);
+    toast(flagged?'\u26A0\uFE0F דיווח נשלח — מסומן לבדיקה':'\uD83D\uDCE4 הדיווח נשלח למנהלת');
+  } else {
+    const mname=S.scanFor==='manager'?'מיכל כהן':S.scanFor==='finance'?'יוסי לוי':'הילה רז';
+    const recData={vendor,date:today,cat,amt:'\u20AA'+amtFinal.toFixed(2),conf,flagged,flagFields};
+    if(route==='petty'){
+      S.pettyBal-=amtFinal;S.pettySpent+=amtFinal;
+      S.pendingPettyReceipts.push({date:today,name:mname,vendor,cat,amt:amtFinal,recData,flagged,flagFields});
+      updateSendBtn();updatePettyBar();updateFinStats();
+      toast(flagged?'\u26A0\uFE0F נשמר — מסומן':'\uD83D\uDCB0 נרשם בקופה');
+    } else {
+      const type=route==='km'?'\u05E7\u05F4\u05DE':'החזר אישי';
+      addFinSalaryRow(today,mname,vendor,type,amtFinal,recData,flagged,flagFields);
+      S.finSl++;updateFinStats();
+      toast('\uD83D\uDCCB '+type+' \u2192 תלוש שכר');
+    }
+  }
 }
 
-function saveApiKey() {
-  var key = document.getElementById("openai-key").value;
-  if(key) { localStorage.setItem("openai_key", key); toast("מפתח API נשמר!", "ok"); }
-  else { toast("הזן מפתח תחילה", "err"); }
+// ══ KM — NUMBER ONLY ══
+let kmFor='coordinator';
+function openKm(who){kmFor=who;document.getElementById('kmov').classList.add('open');document.getElementById('km-val').value='';document.getElementById('km-calc').classList.remove('show')}
+function closeKm(){document.getElementById('kmov').classList.remove('open')}
+function calcKm(v){
+  const km=parseFloat(v)||0;
+  const amt=km*KM_RATE;
+  document.getElementById('km-calc-amt').textContent='\u20AA'+amt.toFixed(2);
+  document.getElementById('km-calc-sub').textContent=km+' \u05E7\u05F4\u05DE \u00D7 \u20AA'+KM_RATE;
+  document.getElementById('km-calc').classList.toggle('show',km>0);
 }
-
-init();
+function submitKm(){
+  const km=parseFloat(document.getElementById('km-val').value)||0;
+  if(!km){toast('אנא הזיני מספר \u05E7\u05F4\u05DE');return}
+  const amt=km*KM_RATE;
+  const today=new Date().toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'});
+  closeKm();
+  const name=kmFor==='manager'?'מיכל כהן':kmFor==='finance'?'יוסי לוי':kmFor==='admin'?'הילה רז':S.username||'דנה שמש';
+  addFinSalaryRow(today,name,km+' \u05E7\u05F4\u05DE','\u05E7\u05F4\u05DE',amt,null,false,[]);
+  S.finSl++;updateFinStats();
+  if(kmFor==='coordinator'){
+    const elist=document.getElementById('explist');
+    const el=document.createElement('div');el.className='ei';el.style.animation='fadein .3s';
+    el.innerHTML='<div class="ei-l"><div class="ei-ico" style="background:var(--teal-lt)">\uD83D\uDE97</div><div><div class="ei-n">\u05E7\u05F4\u05DE</div><div class="ei-m">'+ km+' \u05E7\u05F4\u05DE \u00B7 לשכר</div></div></div><div class="ei-r"><div class="ei-a">\u20AA'+amt.toFixed(2)+'</div><span class="bdg bnw">נשלח</span></div>';
+    elist.insertBefore(el,elist.firstChild);
+    setStep(2);
+  }
+  toast('\uD83D\uDE97 '+km+' \u05E7\u05F4\u05DE = \u20AA'+amt.toFixed(2)+' \u2192 תלוש');
+}
+// HOURS
+let hrsFor="coordinator";
+function openHrs(who){hrsFor=who;document.getElementById("hrsov").classList.add("open");const today=new Date().toISOString().split("T")[0];document.getElementById("hrs-date").value=today;document.getElementById("hrs-in").value="";document.getElementById("hrs-out").value="";document.getElementById("hrs-calc").classList.remove("show");document.getElementById("abs-from").value=today;document.getElementById("abs-to").value=today;document.getElementById("abs-scan-done").style.display="none";document.getElementById("abs-rbox").style.display="flex";switchHrsTab("attendance",document.querySelector(".hrs-tab"));}
+function closeHrs(){document.getElementById("hrsov").classList.remove("open");}
+function switchHrsTab(tab,el){document.querySelectorAll(".hrs-tab").forEach(t=>t.classList.remove("active"));if(el)el.classList.add("active");document.getElementById("hrs-attendance").style.display=tab==="attendance"?"block":"none";document.getElementById("hrs-absence").style.display=tab==="absence"?"block":"none";}
+function calcHrs(){const inV=document.getElementById("hrs-in").value,outV=document.getElementById("hrs-out").value;if(!inV||!outV){document.getElementById("hrs-calc").classList.remove("show");return;}const[ih,im]=inV.split(":").map(Number),[oh,om]=outV.split(":").map(Number);let mins=(oh*60+om)-(ih*60+im);if(mins<0)mins+=24*60;const h=Math.floor(mins/60),m=mins%60;document.getElementById("hrs-calc-amt").textContent=h+":"+String(m).padStart(2,"0");document.getElementById("hrs-calc").classList.add("show");}
+function submitHrs(){const inV=document.getElementById("hrs-in").value,outV=document.getElementById("hrs-out").value;if(!inV||!outV){toast("\u26A0\uFE0F יש להזין שעת כניסה ויציאה");return;}const[ih,im]=inV.split(":").map(Number),[oh,om]=outV.split(":").map(Number);let mins=(oh*60+om)-(ih*60+im);if(mins<0)mins+=24*60;const h=Math.floor(mins/60),m=mins%60;closeHrs();appendLog("<span class=\"lt\">> HOURS: "+hrsFor+" "+document.getElementById("hrs-date").value+" = "+h+"h"+m+"m</span>");toast("\u23F1 "+h+":"+String(m).padStart(2,"0")+" שעות נרשמו");}
+function selAbsType(el,type){document.querySelectorAll(".abs-type").forEach(b=>b.classList.remove("sel"));el.classList.add("sel");S.absType=type;document.getElementById("abs-scan-wrap").style.display=type==="sick"?"block":"none";}
+function simulateAbsScan(){document.getElementById("abs-rbox").style.display="none";document.getElementById("abs-scan-done").style.display="block";toast("\u2713 אישור נסרק");}
+function submitAbsence(){const from=document.getElementById("abs-from").value,to=document.getElementById("abs-to").value;if(!from||!to){toast("\u26A0\uFE0F יש להזין תאריכים");return;}const typeLabel=S.absType==="sick"?"מחלה":S.absType==="vacation"?"חופש":"אחר";closeHrs();appendLog("<span class=\"lw2\">> ABSENCE: "+typeLabel+" "+from+" \u2013 "+to+"</span>");toast("\u2705 דיווח היעדרות — "+typeLabel+" "+from+(from!==to?" עד "+to:""));}
+// RECEIPT VIEWER
+let currentRecData=null;
+function showRec(data){if(typeof data==="string")data=JSON.parse(data);currentRecData=JSON.parse(JSON.stringify(data));document.getElementById("re-vendor").value=data.vendor||"";document.getElementById("re-amt").value=data.amt||"";document.getElementById("re-date").value=data.date||"";document.getElementById("rec-subtitle").textContent="נסרקה ב-"+(data.date||"—")+" · ניתן לתיקון";function setBadge(id,conf){const el=document.getElementById(id);if(!conf){el.className="conf-badge cb-ok";el.textContent="\u2713";return}if(conf>=85){el.className="conf-badge cb-ok";el.textContent="\u2713 "+conf+"%";}else if(conf>=70){el.className="conf-badge cb-mid";el.textContent="~ "+conf+"%";}else{el.className="conf-badge cb-lo";el.textContent="? "+conf+"%;}}if(data.conf){setBadge("cb-vendor",data.conf.vendor);setBadge("cb-amt",data.conf.amt);setBadge("cb-date",data.conf.date);}const banner=document.getElementById("rec-flag-banner");if(data.flagged&&data.flagFields&&data.flagFields.length){banner.style.display="block";document.getElementById("rec-flag-items").textContent="שדות לא ברורים: "+data.flagFields.join(", ");}else{banner.style.display="none";}document.getElementById("rec-changed-banner").style.display="none";document.getElementById("recov").classList.add("open");}
+function recChanged(){document.getElementById("rec-changed-banner").style.display="block";}
+function saveRecEdit(){const vendor=document.getElementById("re-vendor").value.trim();if(!vendor)return;closeRec();toast("\u270F\uFE0F תיקון נשמר — "+vendor);}
+function closeRec(){document.getElementById("recov").classList.remove("open");currentRecData=null;}
+// LOG + TOAST
+function appendLog(html){const log=document.getElementById("finlog"),cur=log.querySelector(".lcur");const br=document.createElement("br"),sp=document.createElement("span");sp.innerHTML=html;if(cur){log.insertBefore(br,cur);log.insertBefore(sp,cur);}else{log.innerHTML+=html+"<br>";}log.scrollTop=log.scrollHeight;}
+let tt;
+function toast(msg){const t=document.getElementById("toast");document.getElementById("tmsg").textContent=msg;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),3200);}
+document.getElementById("scanov").addEventListener("click",function(e){if(e.target===this)closeScan();});
+document.getElementById("kmov").addEventListener("click",function(e){if(e.target===this)closeKm();});
+document.getElementById("hrsov").addEventListener("click",function(e){if(e.target===this)closeHrs();});
+document.getElementById("recov").addEventListener("click",function(e){if(e.target===this)closeRec();});
+document.getElementById("abs-scan-wrap").style.display="block";
 </script>
-</body>
-</html>
+</body></html>
