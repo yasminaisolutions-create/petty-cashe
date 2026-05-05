@@ -7,835 +7,451 @@
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#F0F4F8;--white:#fff;--blue:#3B82F6;--blue-dk:#1D4ED8;--blue-lt:#EFF6FF;--blue-mid:#BFDBFE;--teal:#0D9488;--teal-lt:#F0FDFA;--text:#1E293B;--muted:#64748B;--border:#E2E8F0;--ok:#16A34A;--ok-lt:#F0FDF4;--warn:#D97706;--warn-lt:#FFFBEB;--danger:#DC2626;--danger-lt:#FEF2F2;--purple:#7C3AED;--purple-lt:#F5F3FF;--sh:0 1px 8px rgba(0,0,0,.08);--sh2:0 4px 24px rgba(0,0,0,.12);--r:16px;--rsm:10px;--rxs:7px}
+:root{--bg:#F0F4F8;--white:#fff;--blue:#3B82F6;--blue-dk:#1D4ED8;--blue-lt:#EFF6FF;--blue-mid:#BFDBFE;--teal:#0D9488;--text:#1E293B;--text-lt:#64748B;--border:#E2E8F0;--danger:#EF4444;--danger-lt:#FEF2F2;--ok:#22C55E;--ok-lt:#F0FDF4;--warn:#F59E0B;--warn-lt:#FFFBEB;--shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Heebo",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
-#loading{position:fixed;inset:0;background:linear-gradient(135deg,#EFF6FF,#F0FDF4);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px}
+#loading{position:fixed;inset:0;background:linear-gradient(135deg,#EFF6FF,#F0FDF4);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
 #loading .logo{font-size:32px;font-weight:900;color:var(--blue)}
 #loading .logo span{color:var(--text)}
-.spinner{width:36px;height:36px;border:3px solid var(--border);border-top:3px solid var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top:3px solid var(--blue);border-radius:50%;animation:spin 1s linear infinite;margin-top:16px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.toast{position:fixed;top:20px;right:20px;z-index:9998;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.toast-item{background:#1E293B;color:#fff;padding:12px 18px;border-radius:var(--rsm);font-size:13px;font-weight:600;box-shadow:var(--sh2);animation:slideIn .3s ease;max-width:300px}
-.toast-item.ok{background:var(--ok)}.toast-item.err{background:var(--danger)}.toast-item.warn{background:var(--warn)}
+#toast-container{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:8px;min-width:280px}
+.toast-item{padding:12px 20px;border-radius:10px;font-weight:600;font-size:14px;box-shadow:var(--shadow);animation:slideIn .3s ease}
+.toast-item.ok{background:var(--ok-lt);color:#166534;border:1px solid #bbf7d0}
+.toast-item.err{background:var(--danger-lt);color:#991b1b;border:1px solid #fecaca}
+.toast-item.warn{background:var(--warn-lt);color:#92400e;border:1px solid #fde68a}
 @keyframes slideIn{from{transform:translateX(60px);opacity:0}to{transform:translateX(0);opacity:1}}
-#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#EFF6FF 0%,#F0FDF4 100%)}
-.login-wrap{width:100%;max-width:420px}
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{background:var(--white);border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:0 10px 40px rgba(0,0,0,.1)}
 .login-logo{text-align:center;margin-bottom:28px}
-.login-logo .mark{width:56px;height:56px;background:var(--blue);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;margin:0 auto 12px;box-shadow:0 6px 20px rgba(59,130,246,.3)}
-.login-logo h1{font-size:24px;font-weight:900;color:var(--text)}.login-logo h1 span{color:var(--blue)}
-.login-logo p{font-size:13px;color:var(--muted);margin-top:4px}
-.login-card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh2);padding:32px;border:1px solid var(--border)}
-.login-card h2{font-size:18px;font-weight:700;margin-bottom:20px;text-align:center}
-.fld{margin-bottom:14px}
-.fld label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
-.fi{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--rsm);font-family:"Heebo",sans-serif;font-size:14px;color:var(--text);background:#FAFAFA;transition:all .2s;outline:none}
-.fi:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
-.pw-wrap{position:relative}.pw-wrap .fi{padding-left:38px}
-.pw-eye{position:absolute;left:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;color:var(--muted)}
-.login-err{display:none;background:var(--danger-lt);border:1px solid rgba(220,38,38,.2);border-radius:var(--rxs);padding:9px 13px;margin-bottom:12px;font-size:12px;color:var(--danger);text-align:center}
-.btn-login{width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:var(--rsm);font-family:"Heebo",sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 12px rgba(59,130,246,.3)}
-.btn-login:hover{background:var(--blue-dk);transform:translateY(-1px)}.btn-login:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.demo-hints{margin-top:20px}
-.demo-toggle{width:100%;background:var(--blue-lt);border:1.5px solid var(--blue-mid);border-radius:var(--rsm);padding:10px 14px;font-family:"Heebo",sans-serif;font-size:13px;font-weight:700;color:var(--blue);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .2s}
-.demo-toggle:hover{background:var(--blue-mid)}.demo-toggle .arrow{transition:transform .3s;font-size:11px}
-.demo-toggle.open .arrow{transform:rotate(180deg)}
-.demo-grid{display:none;margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:0;overflow:hidden;transition:max-height .35s ease}
-.demo-grid.open{max-height:400px}
-.demo-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--rsm);padding:12px;cursor:pointer;text-align:center;transition:all .2s}
-.demo-card:hover{border-color:var(--blue);background:var(--blue-lt);transform:translateY(-2px)}
-.demo-card .dc-icon{font-size:24px;margin-bottom:4px}
-.demo-card .dc-name{font-size:12px;font-weight:700;color:var(--text)}
-.demo-card .dc-role{font-size:10px;color:var(--muted);margin-top:2px}
-.demo-card .dc-email{font-size:9px;color:var(--blue);margin-top:3px;direction:ltr;display:block}
-.app-header{background:var(--white);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:var(--sh)}
-.hdr-logo{font-size:18px;font-weight:900;color:var(--blue)}.hdr-logo span{color:var(--text)}
-.hdr-nav{display:flex;gap:4px}
-.nav-pill{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);border:1px solid transparent;transition:all .2s}
-.nav-pill:hover{color:var(--text);background:var(--bg)}.nav-pill.active{background:var(--blue-lt);color:var(--blue);border-color:var(--blue-mid)}
-.hdr-user{display:flex;align-items:center;gap:8px}
-.user-chip{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:20px;background:var(--bg);border:1px solid var(--border);font-size:12px;font-weight:600}
-.user-dot{width:6px;height:6px;border-radius:50%;background:var(--ok)}
-.btn-out{padding:5px 12px;border-radius:20px;background:var(--warn-lt);color:var(--warn);border:1px solid rgba(217,119,6,.25);font-family:"Heebo",sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
-.btn-out:hover{background:rgba(217,119,6,.2)}
-.panel{display:none;padding:24px 20px;max-width:920px;margin:0 auto;animation:fadeUp .3s ease}
-.panel.active{display:block}
-@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.panel-tag{display:inline-flex;align-items:center;gap:5px;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px}
-.tag-blue{background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue-mid)}
-.tag-teal{background:var(--teal-lt);color:var(--teal);border:1px solid rgba(13,148,136,.3)}
-.tag-ok{background:var(--ok-lt);color:var(--ok);border:1px solid rgba(22,163,74,.25)}
-.tag-purple{background:var(--purple-lt);color:var(--purple);border:1px solid rgba(124,58,237,.25)}
-.tag-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.panel-title{font-size:22px;font-weight:900;margin-bottom:3px}.panel-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
-.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px;box-shadow:var(--sh)}
-.card-title{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.stats{display:grid;gap:12px;margin-bottom:16px}
-.s2{grid-template-columns:1fr 1fr}.s3{grid-template-columns:repeat(3,1fr)}.s4{grid-template-columns:repeat(4,1fr)}
-@media(max-width:650px){.s4{grid-template-columns:1fr 1fr}.s3{grid-template-columns:1fr 1fr}}
-.stat{background:var(--white);border:1px solid var(--border);border-radius:var(--rsm);padding:16px;box-shadow:var(--sh)}
-.stat .lbl{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
-.stat .val{font-size:26px;font-weight:900}.stat .sub{font-size:11px;color:var(--muted);margin-top:3px}
-.val-blue{color:var(--blue)}.val-ok{color:var(--ok)}.val-warn{color:var(--warn)}.val-danger{color:var(--danger)}.val-purple{color:var(--purple)}
-.cash-bar{background:var(--white);border:1px solid var(--border);border-radius:var(--rsm);padding:16px;margin-bottom:14px}
-.cash-bar-top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px}
-.cash-amount{font-size:26px;font-weight:900}.cash-pct{font-size:13px;color:var(--muted);text-align:left}
-.bar-track{height:8px;background:var(--bg);border-radius:4px;border:1px solid var(--border);overflow:hidden}
-.bar-fill{height:100%;border-radius:4px;transition:width .7s ease,background .5s}
-.bar-meta{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--muted)}
-.alert-box{display:none;margin-top:12px;padding:11px 14px;border-radius:var(--rsm);align-items:center;justify-content:space-between;gap:10px}
-.alert-box.show{display:flex}
-.alert-warn{background:var(--warn-lt);border:1px solid rgba(217,119,6,.25)}.alert-danger{background:var(--danger-lt);border:1px solid rgba(220,38,38,.2)}.alert-ok{background:var(--ok-lt);border:1px solid rgba(22,163,74,.2)}
-.alert-text{font-size:13px;font-weight:600;color:var(--warn)}
-.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700}
-.badge-pend{background:var(--warn-lt);color:var(--warn)}.badge-ok{background:var(--ok-lt);color:var(--ok)}.badge-danger{background:var(--danger-lt);color:var(--danger)}.badge-blue{background:var(--blue-lt);color:var(--blue)}.badge-flag{background:#FEF0E8;color:#C2410C;border:1px solid rgba(194,65,12,.25)}
-.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:16px}
-.tab{padding:10px 16px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
-.tab:hover{color:var(--text)}.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
-.tab-cnt{display:inline-block;padding:1px 6px;border-radius:20px;font-size:9px;background:var(--warn-lt);color:var(--warn);margin-right:4px}
-.exp-group{background:var(--white);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
-.exp-group-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer}
-.exp-group-hdr:hover{background:var(--bg)}
-.grp-left{display:flex;align-items:center;gap:10px}
-.grp-av{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0}
-.grp-name{font-size:13px;font-weight:700}.grp-meta{font-size:10px;color:var(--muted);margin-top:1px}
-.grp-right{display:flex;align-items:center;gap:8px}
-.grp-total{font-size:14px;font-weight:700}.grp-chev{font-size:10px;color:var(--muted);transition:transform .25s}
-.exp-group.open .grp-chev{transform:rotate(180deg)}
-.exp-group-body{display:none;border-top:1px solid var(--border)}
-.exp-group.open .exp-group-body{display:block}
-.exp-row{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--bg);transition:background .15s;position:relative}
-.exp-row:last-child{border-bottom:none}.exp-row:hover{background:var(--bg)}
-.exp-row.flagged{border-right:3px solid #C2410C;background:#FEF0E8}.exp-row.flagged:hover{background:#FDE8D8}
-.exp-row-l{display:flex;align-items:center;gap:9px}
-.exp-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
-.exp-name{font-size:13px;font-weight:700}.exp-meta{font-size:10px;color:var(--muted);margin-top:1px;display:flex;align-items:center;gap:5px}
-.exp-row-r{display:flex;align-items:center;gap:8px}
-.exp-amt{font-size:14px;font-weight:700}
-.btn-approve{padding:6px 13px;border-radius:var(--rxs);background:var(--ok-lt);color:var(--ok);border:1px solid rgba(22,163,74,.25);font-family:"Heebo",sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
-.btn-approve:hover{background:rgba(22,163,74,.2)}
-.btn-action{padding:6px 13px;border-radius:var(--rxs);background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue-mid);font-family:"Heebo",sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s}
-.btn-action:hover{background:var(--blue-mid)}
-.flag-pill{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:9px;font-weight:700;background:#FEF0E8;color:#C2410C;border:1px solid rgba(194,65,12,.25)}
-.phone-wrap{display:flex;justify-content:center;padding:10px 0 16px}
-.phone{width:260px;background:var(--white);border:2px solid #CBD5E1;border-radius:30px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,.12)}
-.phone-notch{width:60px;height:14px;background:var(--bg);border-radius:0 0 9px 9px;margin:0 auto}
-.phone-hdr{background:var(--blue);padding:12px;color:#fff}
-.phone-hdr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.phone-name{font-size:13px;font-weight:700}.phone-time{font-size:11px;opacity:.7}
-.phone-bal{background:rgba(255,255,255,.15);border-radius:var(--rsm);padding:9px 11px}
-.phone-bal-lbl{font-size:8px;opacity:.7;letter-spacing:.5px;text-transform:uppercase}
-.phone-bal-amt{font-size:20px;font-weight:900;margin-top:2px}.phone-bal-hint{font-size:8px;opacity:.6;margin-top:1px}
-.phone-body{padding:10px}
-.phone-section-lbl{font-size:8px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--blue);margin-bottom:8px;background:var(--blue-lt);border:1px solid var(--blue-mid);border-radius:20px;display:inline-block;padding:2px 8px}
-.phone-row{display:flex;align-items:center;justify-content:space-between;padding:8px 9px;background:var(--white);border:1px solid var(--border);border-radius:var(--rxs);margin-bottom:6px}
-.phone-row-l{display:flex;align-items:center;gap:7px}
-.phone-row-icon{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px}
-.phone-row-name{font-size:11px;font-weight:700}.phone-row-meta{font-size:9px;color:var(--muted)}
-.phone-row-r .pamt{font-size:12px;font-weight:700}.phone-row-r .pstatus{font-size:8px;text-align:left;margin-top:2px}
-.phone-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
-.phone-btn{padding:9px 5px;border-radius:var(--rxs);border:1.5px solid var(--blue-mid);background:var(--blue-lt);color:var(--blue-dk);font-family:"Heebo",sans-serif;font-size:10px;font-weight:700;cursor:pointer;text-align:center}
-.phone-btn.km{border-color:rgba(13,148,136,.3);background:var(--teal-lt);color:var(--teal)}
-.action-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-@media(max-width:480px){.action-row{grid-template-columns:1fr}}
-.action-btn{padding:12px;border-radius:var(--rsm);border:1.5px solid var(--blue-mid);background:var(--blue-lt);color:var(--blue-dk);font-family:"Heebo",sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s}
-.action-btn:hover{background:var(--blue-mid)}.action-btn.km{border-color:rgba(13,148,136,.3);background:var(--teal-lt);color:var(--teal)}.action-btn.km:hover{background:rgba(13,148,136,.15)}
-.overlay{position:fixed;inset:0;z-index:500;background:rgba(15,23,42,.55);backdrop-filter:blur(5px);display:none;align-items:flex-end;justify-content:center}
-.overlay.open{display:flex}
-.sheet{width:100%;max-width:420px;background:var(--white);border-radius:22px 22px 0 0;padding:22px;border:1px solid var(--border);border-bottom:none;box-shadow:0 -6px 32px rgba(0,0,0,.12);animation:sheetUp .35s cubic-bezier(.16,1,.3,1)}
-@keyframes sheetUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
-.sheet-handle{width:34px;height:3px;background:var(--border);border-radius:2px;margin:0 auto 16px}
-.sheet-title{font-size:17px;font-weight:900;text-align:center;margin-bottom:4px}
-.sheet-sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:14px}
-.scan-box{width:100%;height:100px;background:var(--bg);border:1.5px dashed var(--blue-mid);border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;margin-bottom:14px}
-.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--blue),transparent);animation:scanMove 1.6s linear infinite;top:0}
-@keyframes scanMove{0%{top:0}100%{top:100%}}
-.scan-result{display:none}
-.ai-ok-banner{background:var(--ok-lt);border:1px solid rgba(22,163,74,.2);border-radius:var(--rxs);padding:9px 13px;margin-bottom:12px;font-size:12px;font-weight:700;color:var(--ok);text-align:center}
-.field-row{margin-bottom:10px}
-.field-row label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;gap:6px;margin-bottom:4px}
-.conf-badge{padding:1px 6px;border-radius:20px;font-size:8px;font-weight:700}.conf-hi{background:var(--ok-lt);color:var(--ok)}.conf-mid{background:var(--warn-lt);color:var(--warn)}.conf-lo{background:var(--danger-lt);color:var(--danger)}
-.fi-mono{width:100%;padding:9px 11px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rxs);font-family:"Heebo",sans-serif;font-size:13px;color:var(--text);outline:none;transition:all .2s}
-.fi-mono:focus{border-color:var(--blue);background:#fff}.fi-mono.flag{border-color:rgba(194,65,12,.4);background:#FEF0E8}
-.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--border);border-radius:var(--rxs);overflow:hidden;margin-bottom:10px}
-.cat-opt{padding:8px 4px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s}
-.cat-opt:hover{background:var(--bg);color:var(--text)}.cat-opt.sel{background:var(--blue-lt);color:var(--blue)}
-.route-grid{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--border);border-radius:var(--rxs);overflow:hidden;margin-bottom:10px}
-.route-opt{padding:8px 4px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s}
-.route-opt:hover{background:var(--bg)}.route-opt.sel{background:var(--blue-lt);color:var(--blue)}
-.flag-warn-box{display:none;background:#FEF0E8;border:1.5px solid rgba(194,65,12,.3);border-radius:var(--rsm);padding:11px 14px;margin-bottom:11px}.flag-warn-box.show{display:block}
-.flag-warn-title{font-size:12px;font-weight:700;color:#C2410C;margin-bottom:4px}
-.flag-warn-list{font-size:11px;color:#C2410C;list-style:none;display:flex;flex-direction:column;gap:2px}
-.btn-submit{width:100%;padding:12px;border-radius:var(--rsm);color:#fff;font-family:"Heebo",sans-serif;font-size:14px;font-weight:700;border:none;cursor:pointer;transition:all .2s;margin-bottom:6px}
-.btn-submit.normal{background:var(--blue)}.btn-submit.normal:hover{background:var(--blue-dk)}
-.btn-submit.flagged{background:#C2410C}.btn-submit.flagged:hover{opacity:.9}
-.btn-cancel{width:100%;padding:7px;background:none;border:none;color:var(--muted);font-family:"Heebo",sans-serif;font-size:12px;cursor:pointer}
-.refill-card{display:none;background:var(--warn-lt);border:1px solid rgba(217,119,6,.3);border-radius:var(--r);padding:20px;margin-bottom:16px;animation:fadeUp .3s ease}.refill-card.show{display:block}
-.refill-title{font-size:16px;font-weight:900;color:var(--warn);margin-bottom:4px}
-.refill-sub{font-size:12px;color:var(--warn);margin-bottom:12px}
-.refill-amt{font-size:28px;font-weight:900;color:var(--warn);margin-bottom:14px}
-.btn-refill-ok{width:100%;padding:12px;border-radius:var(--rsm);background:var(--ok);color:#fff;font-family:"Heebo",sans-serif;font-size:14px;font-weight:700;border:none;cursor:pointer;transition:all .2s}.btn-refill-ok:hover{opacity:.9}
-.fin-table{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
-.fin-th{display:grid;grid-template-columns:1fr 2fr 1fr 1fr 1fr;padding:9px 14px;background:var(--bg);border-bottom:1px solid var(--border);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
-.fin-tr{display:grid;grid-template-columns:1fr 2fr 1fr 1fr 1fr;padding:11px 14px;border-bottom:1px solid var(--bg);font-size:12px;align-items:center;transition:background .15s}
-.fin-tr:last-child{border-bottom:none}.fin-tr:hover{background:var(--bg)}.fin-tr.flagged{border-right:3px solid #C2410C}
-@media(max-width:650px){.fin-th,.fin-tr{grid-template-columns:1fr 2fr 1fr 1fr}.fin-th>*:nth-child(5),.fin-tr>*:nth-child(5){display:none}}
-.prog-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);margin-bottom:12px;overflow:hidden}
-.prog-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border)}
-.prog-left{display:flex;align-items:center;gap:12px}
-.prog-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
-.prog-name{font-size:14px;font-weight:700}.prog-meta{font-size:10px;color:var(--muted);margin-top:2px}
-.prog-body{padding:16px 18px}
-.mgr-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--bg);border-radius:var(--rsm);margin-bottom:7px}
-.mgr-av{width:30px;height:30px;border-radius:8px;background:var(--blue-lt);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0}
-.mgr-info .mgr-name{font-size:12px;font-weight:700}.mgr-info .mgr-email{font-size:10px;color:var(--muted);direction:ltr;text-align:right}
-.member-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--white);border:1px solid var(--border);border-radius:var(--rsm);margin-bottom:7px}
-.member-av{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0}
-.member-info .member-name{font-size:12px;font-weight:700}.member-info .member-role{font-size:10px;color:var(--muted)}.member-info .member-email{font-size:9px;color:var(--muted);direction:ltr;text-align:right}
-.tog{position:relative;width:34px;height:19px;cursor:pointer}.tog input{opacity:0;width:0;height:0;position:absolute}
-.tt{position:absolute;inset:0;border-radius:10px;background:var(--border);transition:all .25s}.tog input:checked+.tt{background:var(--teal)}
-.tth{position:absolute;top:2.5px;right:2.5px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:all .25s}.tog input:checked~.tth{right:auto;left:2.5px}
-.btn-add{padding:6px 13px;border-radius:20px;background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue-mid);font-family:"Heebo",sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s}.btn-add:hover{background:var(--blue-mid)}
-.add-form{display:none;background:var(--white);border:1.5px solid var(--blue-mid);border-radius:var(--rsm);padding:14px;margin-top:9px;animation:fadeUp .25s}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px}
-.btn-cfm{padding:9px 14px;border-radius:var(--rxs);background:var(--blue);color:#fff;border:none;font-family:"Heebo",sans-serif;font-size:12px;font-weight:700;cursor:pointer;flex:1}
-.btn-cnl{padding:9px 13px;border-radius:var(--rxs);background:var(--bg);color:var(--muted);border:1px solid var(--border);font-family:"Heebo",sans-serif;font-size:12px;cursor:pointer}
-.log-box{background:#0F172A;border-radius:var(--rsm);padding:12px;font-family:"Courier New",monospace;font-size:10px;line-height:1.8;height:120px;overflow-y:auto;color:#94A3B8}
-.lg-blue{color:#60A5FA}.lg-ok{color:#4ADE80}.lg-warn{color:#FCD34D}.lg-danger{color:#F87171}
-.dots{display:inline-flex;gap:3px}.dots span{width:4px;height:4px;border-radius:50%;background:var(--blue);animation:dot .8s ease-in-out infinite}.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
-@keyframes dot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
-@keyframes flash{0%{background:rgba(59,130,246,.15)}100%{background:transparent}}
-@keyframes flashOk{0%{background:rgba(22,163,74,.12)}100%{background:transparent}}
-.shake{animation:shake .4s ease}@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+.login-logo h1{font-size:28px;font-weight:900;color:var(--blue)}
+.login-logo h1 span{color:var(--text)}
+.login-logo p{font-size:14px;color:var(--text-lt);margin-top:4px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:var(--text-lt);margin-bottom:6px}
+.form-group input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:15px;color:var(--text);background:var(--bg);transition:border-color .2s}
+.form-group input:focus{outline:none;border-color:var(--blue);background:var(--white)}
+.btn-login{width:100%;padding:13px;background:var(--blue);color:var(--white);border:none;border-radius:10px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;transition:background .2s;margin-top:8px}
+.btn-login:hover{background:var(--blue-dk)}
+.btn-login:disabled{opacity:.6;cursor:not-allowed}
+.login-err{display:none;background:var(--danger-lt);color:var(--danger);border:1px solid #fecaca;border-radius:8px;padding:10px 14px;font-size:13px;margin-top:12px;text-align:center}
+.demo-hint{margin-top:20px;border:1.5px solid var(--border);border-radius:12px;overflow:hidden}
+.demo-hint-header{padding:10px 16px;background:var(--bg);font-size:13px;font-weight:600;color:var(--text-lt);cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none}
+.demo-hint-body{display:none;padding:12px}
+.demo-hint-body.open{display:block}
+.demo-card{padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;transition:border-color .2s,background .2s}
+.demo-card:last-child{margin-bottom:0}
+.demo-card:hover{border-color:var(--blue);background:var(--blue-lt)}
+.demo-card .dc-name{font-weight:700;font-size:14px}
+.demo-card .dc-email{font-size:12px;color:var(--text-lt)}
+.demo-card .dc-role{font-size:11px;font-weight:600;margin-top:4px;padding:2px 8px;border-radius:20px;display:inline-block}
+.role-admin{background:#fce7f3;color:#9d174d}
+.role-field{background:#dbeafe;color:#1d4ed8}
+.role-manager{background:#dcfce7;color:#166534}
+.role-finance{background:#fef3c7;color:#92400e}
+#app{display:none}
+.app-header{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.app-header .logo{font-size:20px;font-weight:900;color:var(--blue)}
+.app-header .logo span{color:var(--text)}
+.header-right{display:flex;align-items:center;gap:12px}
+.user-info{font-size:13px;color:var(--text-lt)}
+.user-info strong{color:var(--text);font-weight:700}
+.btn-logout{padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--white);font-family:inherit;font-size:13px;font-weight:600;color:var(--text-lt);cursor:pointer;transition:all .2s}
+.btn-logout:hover{border-color:var(--danger);color:var(--danger)}
+.role-switch-bar{background:var(--blue-lt);border-bottom:1px solid var(--blue-mid);padding:8px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.role-switch-bar span{font-size:12px;font-weight:700;color:var(--blue-dk)}
+.btn-role-view{padding:5px 12px;border:1.5px solid var(--blue-mid);border-radius:20px;background:var(--white);font-family:inherit;font-size:12px;font-weight:600;color:var(--blue-dk);cursor:pointer;transition:all .2s}
+.btn-role-view:hover,.btn-role-view.active{background:var(--blue);color:var(--white);border-color:var(--blue)}
+.main-nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+.nav-tab{padding:14px 16px;border:none;background:none;font-family:inherit;font-size:14px;font-weight:500;color:var(--text-lt);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;transition:all .2s}
+.nav-tab:hover{color:var(--blue)}
+.nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:700}
+.app-content{padding:24px;max-width:1100px;margin:0 auto}
+.page-section{display:none}
+.page-section.active{display:block}
+.section-title{font-size:22px;font-weight:800;margin-bottom:20px;color:var(--text)}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:var(--white);border-radius:14px;padding:20px;box-shadow:var(--shadow);text-align:center}
+.stat-card .stat-num{font-size:32px;font-weight:900;color:var(--blue)}
+.stat-card .stat-lbl{font-size:13px;color:var(--text-lt);margin-top:4px;font-weight:500}
+.card{background:var(--white);border-radius:14px;padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
+.card-title{font-size:16px;font-weight:700;margin-bottom:16px;color:var(--text)}
+.btn{padding:10px 18px;border:none;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--blue);color:var(--white)}
+.btn-primary:hover{background:var(--blue-dk)}
+.btn-success{background:var(--ok);color:var(--white)}
+.btn-danger{background:var(--danger);color:var(--white)}
+.btn-outline{background:var(--white);color:var(--blue);border:1.5px solid var(--blue)}
+.expenses-table{width:100%;border-collapse:collapse;font-size:14px}
+.expenses-table th{background:var(--bg);padding:10px 14px;text-align:right;font-weight:700;color:var(--text-lt);border-bottom:2px solid var(--border)}
+.expenses-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+.expenses-table tr:hover td{background:var(--bg)}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.status-pending{background:var(--warn-lt);color:#92400e}
+.status-approved{background:var(--ok-lt);color:#166534}
+.status-rejected{background:var(--danger-lt);color:#991b1b}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:20px;padding:32px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:20px;font-weight:800;margin-bottom:20px}
+.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.form-row{grid-template-columns:1fr}.stats-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
-<!-- LOADING -->
-<div id="loading"><div class="logo">PettyCash <span>AI</span></div><div class="spinner"></div><div style="font-size:13px;color:#64748B">טוען...</div></div>
-<!-- TOAST -->
-<div id="toast-container" class="toast"></div>
-<!-- LOGIN -->
+
+<div id="loading">
+  <div class="logo">PettyCash <span>AI</span></div>
+  <div class="spinner"></div>
+  <div style="margin-top:12px;font-size:14px;color:#64748B">טוען...</div>
+</div>
+
+<div id="toast-container"></div>
+
 <div id="login-screen" style="display:none">
-<div class="login-wrap">
-<div class="login-logo"><div class="mark">₪</div><h1>PettyCash <span>AI</span></h1><p>ניהול קופה קטנה חכם לארגונים</p></div>
-<div class="login-card">
-<h2>כניסה למערכת</h2>
-<div class="fld"><label>אימייל</label><input type="email" id="l-email" class="fi" placeholder="your@email.com" style="direction:ltr;text-align:right" onkeydown="if(event.key==='Enter')document.getElementById('l-pass').focus()"></div>
-<div class="fld" style="margin-bottom:16px"><label>סיסמה</label><div class="pw-wrap"><input type="password" id="l-pass" class="fi" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"><button class="pw-eye" onclick="togglePwd()">👁</button></div></div>
-<div class="login-err" id="login-err">❌ אימייל או סיסמה שגויים</div>
-<div id="login-loading" style="display:none;text-align:center;padding:6px;font-size:12px;color:#64748B">⏳ מתחבר...</div>
-<button class="btn-login" id="login-btn" onclick="doLogin()">כניסה למערכת ←</button>
-<!-- DEMO HINTS -->
-<div class="demo-hints">
-<button class="demo-toggle" id="demo-toggle-btn" onclick="toggleDemoHints()"><span>🎭 פרטי כניסה לדמו</span><span class="arrow">▼</span></button>
-<div class="demo-grid" id="demo-grid">
-<div class="demo-card" onclick="fillDemo('dana@pettycash.app','Test123456')"><div class="dc-icon">👷</div><div class="dc-name">דנה שמש</div><div class="dc-role">עובד שטח</div><span class="dc-email">dana@pettycash.app</span></div>
-<div class="demo-card" onclick="fillDemo('michal@pettycash.app','Test123456')"><div class="dc-icon">👩‍💼</div><div class="dc-name">מיכל כהן</div><div class="dc-role">מנהלת תוכנית</div><span class="dc-email">michal@pettycash.app</span></div>
-<div class="demo-card" onclick="fillDemo('yossi@pettycash.app','Test123456')"><div class="dc-icon">💰</div><div class="dc-name">יוסי לוי</div><div class="dc-role">כספים</div><span class="dc-email">yossi@pettycash.app</span></div>
-<div class="demo-card" onclick="fillDemo('hila@pettycash.app','Test123456')"><div class="dc-icon">⚙️</div><div class="dc-name">הילה רז</div><div class="dc-role">מנהל מערכת</div><span class="dc-email">hila@pettycash.app</span></div>
+  <div class="login-card">
+    <div class="login-logo">
+      <h1>PettyCash <span>AI</span></h1>
+      <p>מערכת ניהול קופה קטנה לארגונים</p>
+    </div>
+    <div class="form-group">
+      <label>אימייל</label>
+      <input type="email" id="login-email" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>סיסמה</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-login" id="btn-login-submit">כניסה למערכת</button>
+    <div class="login-err" id="login-err"></div>
+    <div class="demo-hint">
+      <div class="demo-hint-header" id="demo-toggle">
+        🔑 פרטי כניסה לדמו
+        <span id="demo-arrow">▼</span>
+      </div>
+      <div class="demo-hint-body" id="demo-body">
+        <div class="demo-card" onclick="fillLogin('yasminko27@gmail.com','')">
+          <div class="dc-name">יסמין (בעלים)</div>
+          <div class="dc-email">yasminko27@gmail.com</div>
+          <div class="dc-role role-admin">אדמין</div>
+        </div>
+        <div class="demo-card" onclick="fillLogin('dana@pettycash.app','Test123456')">
+          <div class="dc-name">דנה שמש</div>
+          <div class="dc-email">dana@pettycash.app</div>
+          <div class="dc-role role-field">רכזת שטח</div>
+        </div>
+        <div class="demo-card" onclick="fillLogin('michal@pettycash.app','Test123456')">
+          <div class="dc-name">מיכל כהן</div>
+          <div class="dc-email">michal@pettycash.app</div>
+          <div class="dc-role role-manager">מנהלת</div>
+        </div>
+        <div class="demo-card" onclick="fillLogin('yossi@pettycash.app','Test123456')">
+          <div class="dc-name">יוסי לוי</div>
+          <div class="dc-email">yossi@pettycash.app</div>
+          <div class="dc-role role-finance">כספים</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<div id="app">
+  <header class="app-header">
+    <div class="logo">PettyCash <span>AI</span></div>
+    <div class="header-right">
+      <div class="user-info">שלום, <strong id="hdr-name">-</strong> | <span id="hdr-role-label">-</span></div>
+      <button class="btn-logout" onclick="doLogout()">יציאה</button>
+    </div>
+  </header>
+  <div class="role-switch-bar" id="role-switch-bar" style="display:none">
+    <span>👁 צפייה כ:</span>
+    <button class="btn-role-view active" onclick="switchView('field')">רכזת שטח</button>
+    <button class="btn-role-view" onclick="switchView('manager')">מנהל</button>
+    <button class="btn-role-view" onclick="switchView('finance')">כספים</button>
+    <button class="btn-role-view" onclick="switchView('admin')">אדמין (שלי)</button>
+  </div>
+  <nav class="main-nav" id="main-nav"></nav>
+  <div class="app-content" id="app-content"></div>
 </div>
-</div>
-</div>
-</div>
-<!-- APP -->
-<div id="app-screen" style="display:none">
-<header class="app-header">
-<div class="hdr-logo">PettyCash <span>AI</span></div>
-<nav class="hdr-nav" id="hdr-nav"></nav>
-<div class="hdr-user"><div class="user-chip"><div class="user-dot"></div><span id="hdr-name">—</span></div><button class="btn-out" onclick="doLogout()">← יציאה</button></div>
-</header>
-<div class="panel" id="panel-coordinator">
-<div class="panel-tag tag-blue"><div class="tag-dot"></div>עובד שטח</div>
-<div class="panel-title" id="coord-greeting">שלום</div>
-<div class="panel-sub">תוכנית נוער בסיכון — רמת גן</div>
-<div class="phone-wrap"><div class="phone"><div class="phone-notch"></div><div class="phone-hdr"><div class="phone-hdr-top"><div class="phone-name" id="phone-greeting">שלום</div><div class="phone-time" id="phone-time">--:--</div></div><div class="phone-bal"><div class="phone-bal-lbl">קופה קטנה</div><div class="phone-bal-amt" id="phone-bal">₪450</div><div class="phone-bal-hint">יתרה לחודש</div></div></div><div class="phone-body"><div class="phone-section-lbl">📋 דיווחים אחרונים</div><div class="phone-row"><div class="phone-row-l"><div class="phone-row-icon" style="background:#EFF6FF">🍕</div><div><div class="phone-row-name">דומינוס</div><div class="phone-row-meta">קופה קטנה</div></div></div><div class="phone-row-r"><div class="pamt">₪180</div><div class="pstatus" style="color:#16A34A">אושר ✓</div></div></div><div class="phone-row"><div class="phone-row-l"><div class="phone-row-icon" style="background:#FFFBEB">☕</div><div><div class="phone-row-name">ארומה</div><div class="phone-row-meta">החזר אישי</div></div></div><div class="phone-row-r"><div class="pamt">₪44</div><div class="pstatus" style="color:#D97706">בבדיקה</div></div></div><div class="phone-actions"><div class="phone-btn" onclick="openScanner()">📸 סרוק קבלה</div><div class="phone-btn km" onclick="openKm()">🚗 דיווח ק"מ</div></div></div></div></div>
-<div class="action-row"><button class="action-btn" onclick="openScanner()">📸 סרוק קבלה חדשה</button><button class="action-btn km" onclick="openKm()">🚗 דיווח ק"מ</button></div>
-</div>
-<div class="panel" id="panel-manager">
-<div class="panel-tag tag-teal"><div class="tag-dot"></div>מנהלת תוכנית</div>
-<div class="panel-title">ניהול הוצאות צוות</div>
-<div class="panel-sub">אישור קבלות ומעקב קופה קטנה</div>
-<div class="cash-bar"><div class="cash-bar-top"><div><div style="font-size:10px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">קופה קטנה</div><div class="cash-amount" id="cash-amount">₪2,890</div></div><div class="cash-pct"><div id="cash-pct-text">34%</div><div>מהתקציב</div></div></div><div class="bar-track"><div class="bar-fill" id="cash-bar-fill" style="width:34%;background:linear-gradient(90deg,#0D9488,#2DD4BF)"></div></div><div class="bar-meta"><div id="cash-spent-text">הוצאות: ₪5,610</div><div>תקציב: ₪8,500</div></div><div class="alert-box alert-warn" id="low-cash-alert"><span class="alert-text">⚠️ יתרת קופה נמוכה — פחות מ-30%</span><button style="padding:7px 12px;border-radius:6px;background:#D97706;color:#fff;border:none;font-family:Heebo,sans-serif;font-size:11px;font-weight:700;cursor:pointer" onclick="sendToFinance()">📤 שלח לכספים</button></div></div>
-<div class="tabs"><div class="tab active" onclick="mgrTab(this,'pending')">ממתין לאישור <span class="tab-cnt" id="pending-cnt">7</span></div><div class="tab" onclick="mgrTab(this,'approved')">אושרו</div><div class="tab" onclick="mgrTab(this,'team')">הצוות שלי</div></div>
-<div id="mgr-tab-pending"><div id="exp-list-pending"></div></div>
-<div id="mgr-tab-approved" style="display:none"><div id="exp-list-approved"></div></div>
-<div id="mgr-tab-team" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:13px;font-weight:700">עובדי הצוות</span><button class="btn-add" onclick="toggleAddMember()">+ הוסף עובד</button></div><div id="team-list"></div><div class="add-form" id="add-member-form"><div class="g2"><div><label class="flbl" style="font-size:10px;font-weight:700;color:#64748B;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:4px">שם מלא</label><input type="text" id="new-member-name" class="fi" placeholder="שם ושם משפחה"></div><div><label class="flbl" style="font-size:10px;font-weight:700;color:#64748B;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:4px">אימייל</label><input type="email" id="new-member-email" class="fi" placeholder="name@org.il" style="direction:ltr;text-align:left"></div></div><div style="display:flex;gap:7px"><button class="btn-cfm" onclick="addMember()">✓ הוסף</button><button class="btn-cnl" onclick="toggleAddMember()">ביטול</button></div></div></div>
-</div>
-<div class="panel" id="panel-finance">
-<div class="panel-tag tag-ok"><div class="tag-dot"></div>ניהול כספים</div>
-<div class="panel-title">דשבורד כספי</div>
-<div class="panel-sub">מבט-על על כל התוכניות</div>
-<div class="refill-card" id="refill-card"><div class="refill-title">📥 בקשת חידוש קופה</div><div class="refill-sub" id="refill-sub">נשלחו קבלות מאושרות לאישורך</div><div class="refill-amt" id="refill-amt">₪0</div><button class="btn-refill-ok" onclick="approveRefill()">✓ אשר העברת כסף למנהלת</button></div>
-<div class="stats s4"><div class="stat"><div class="lbl">קבלות קופה</div><div class="val val-blue" id="fin-petty-cnt">2</div><div class="sub">ממתינות</div></div><div class="stat"><div class="lbl">מסומנות AI</div><div class="val val-danger" id="fin-flag-cnt">0</div><div class="sub">לבדיקה</div></div><div class="stat"><div class="lbl">החזרים</div><div class="val val-warn" id="fin-personal-cnt">2</div><div class="sub">פתוחים</div></div><div class="stat"><div class="lbl">סה"כ חודש</div><div class="val val-purple" id="fin-total">₪591</div><div class="sub">הוצאות</div></div></div>
-<div class="tabs"><div class="tab active" onclick="finTab(this,'petty')">קופה קטנה <span class="tab-cnt" id="fin-petty-badge">2</span></div><div class="tab" onclick="finTab(this,'personal')">החזרים</div><div class="tab" onclick="finTab(this,'programs')">תוכניות</div></div>
-<div id="fin-tab-petty"><div class="fin-table"><div class="fin-th"><div>תאריך</div><div>עובד / ספק</div><div>סכום</div><div>סטטוס</div><div>פעולה</div></div><div id="fin-petty-rows"></div></div></div>
-<div id="fin-tab-personal" style="display:none"><div class="fin-table"><div class="fin-th"><div>תאריך</div><div>עובד / ספק</div><div>סכום</div><div>סטטוס</div><div>פעולה</div></div><div id="fin-personal-rows"></div></div></div>
-<div id="fin-tab-programs" style="display:none"><div id="fin-programs-list"></div></div>
-<div style="font-size:10px;font-weight:700;color:#64748B;letter-spacing:.5px;text-transform:uppercase;margin:4px 0 7px">לוג מערכת</div>
-<div class="log-box" id="log-box"><span class="lg-blue">&gt; SYSTEM: PettyCash AI v2.0 initialized</span><br></div>
-</div>
-<div class="panel" id="panel-admin">
-<div class="panel-tag tag-purple"><div class="tag-dot"></div>Admin</div>
-<div class="panel-title">ניהול ארגון</div>
-<div class="panel-sub">מחזיקה את כל הארגון ממקום אחד</div>
-<div class="stats s4"><div class="stat"><div class="lbl">תוכניות פעילות</div><div class="val val-blue" id="adm-progs">2</div></div><div class="stat"><div class="lbl">מנהלות</div><div class="val val-ok" id="adm-mgrs">2</div></div><div class="stat"><div class="lbl">עובדי שטח</div><div class="val val-warn" id="adm-coords">7</div></div><div class="stat"><div class="lbl">תקציב קופה</div><div class="val val-purple" id="adm-budget">₪15K</div></div></div>
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span style="font-size:14px;font-weight:700">תוכניות הארגון</span><button class="btn-add" onclick="toggleAddProgram()">+ תוכנית חדשה</button></div>
-<div class="add-form" id="add-program-form" style="margin-bottom:14px"><div class="g2"><div><label style="font-size:10px;font-weight:700;color:#64748B;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:4px">שם תוכנית</label><input type="text" id="new-prog-name" class="fi" placeholder="שם התוכנית"></div><div><label style="font-size:10px;font-weight:700;color:#64748B;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:4px">אזור</label><input type="text" id="new-prog-region" class="fi" placeholder="מחוז / עיר"></div></div><div style="display:flex;gap:7px"><button class="btn-cfm" onclick="addProgram()">✓ הוסף</button><button class="btn-cnl" onclick="toggleAddProgram()">ביטול</button></div></div>
-<div id="programs-list"></div>
-</div>
-</div>
-<!-- SCANNER -->
-<div class="overlay" id="scan-overlay">
-<div class="sheet"><div class="sheet-handle"></div><div class="sheet-title">📸 סריקת קבלה</div>
-<div class="sheet-sub" id="scan-status"><span class="dots"><span></span><span></span><span></span></span> לחץ לסימולציית סריקה</div>
-<div class="scan-box" id="scan-box" onclick="triggerScan()"><div class="scan-line"></div><div style="font-size:28px;opacity:.4">📷</div></div>
-<div class="scan-result" id="scan-result">
-<div class="ai-ok-banner" id="scan-banner">✅ AI זיהה את הקבלה — בדוק ואשר</div>
-<div class="field-row"><label>ספק <span id="conf-vendor" class="conf-badge conf-hi">98%</span></label><input class="fi-mono" id="sc-vendor" type="text" placeholder="שם ספק"></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px"><div class="field-row" style="margin:0"><label>סכום <span id="conf-amt" class="conf-badge conf-hi">97%</span></label><input class="fi-mono" id="sc-amt" type="number" placeholder="₪"></div><div class="field-row" style="margin:0"><label>תאריך <span id="conf-date" class="conf-badge conf-hi">92%</span></label><input class="fi-mono" id="sc-date" type="text" placeholder="DD/MM"></div></div>
-<div class="field-row"><label>קטגוריה</label><div class="cat-grid" id="cat-grid"><div class="cat-opt sel" onclick="selCat(this,'מזון')">🍕 מזון</div><div class="cat-opt" onclick="selCat(this,'ציוד')">📦 ציוד</div><div class="cat-opt" onclick="selCat(this,'תחבורה')">🚌 תחבורה</div><div class="cat-opt" onclick="selCat(this,'קפה')">☕ קפה</div><div class="cat-opt" onclick="selCat(this,'אחר')">📋 אחר</div><div class="cat-opt" onclick="selCat(this,'כספים')">💳 כספים</div></div></div>
-<div class="field-row"><label>סוג הוצאה</label><div class="route-grid" id="route-grid"><div class="route-opt sel" onclick="selRoute(this,'petty')">💳 קופה קטנה</div><div class="route-opt" onclick="selRoute(this,'personal')">👤 החזר אישי</div><div class="route-opt" onclick="selRoute(this,'km')">🚗 ק"מ</div></div></div>
-<div class="flag-warn-box" id="flag-warn-box"><div class="flag-warn-title">⚠️ AI סימן בעיות באמינות</div><ul class="flag-warn-list" id="flag-warn-list"></ul><div style="font-size:10px;color:#64748B;margin-top:5px">הקבלה תסומן לבדיקה ידנית</div></div>
-<button class="btn-submit normal" id="btn-submit-scan" onclick="submitScan()">📤 שלח קבלה</button>
-<button class="btn-cancel" onclick="closeScanner()">ביטול</button>
-</div>
-</div></div>
-<!-- KM -->
-<div class="overlay" id="km-overlay">
-<div class="sheet"><div class="sheet-handle"></div><div class="sheet-title">🚗 דיווח ק"מ</div><div class="sheet-sub">תעריף: ₪1.50 לק"מ</div>
-<div class="fld"><label style="font-size:10px;font-weight:700;color:#64748B;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:4px">מקור</label><input class="fi" id="km-from" type="text" placeholder="כתובת יציאה"></div>
-<div class="fld"><label style="font-size:10px;font-weight:700;color:#64748B;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:4px">יעד</label><input class="fi" id="km-to" type="text" placeholder="כתובת יעד"></div>
-<div class="fld"><label style="font-size:10px;font-weight:700;color:#64748B;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:4px">מרחק (ק"מ)</label><input class="fi" id="km-dist" type="number" placeholder="0" oninput="calcKm()"></div>
-<div id="km-calc-box" style="display:none;background:#F0FDFA;border:1px solid rgba(13,148,136,.3);border-radius:10px;padding:12px;text-align:center;margin-bottom:14px"><div id="km-calc-amt" style="font-size:24px;font-weight:900;color:#0D9488">₪0</div><div id="km-calc-sub" style="font-size:11px;color:#64748B;margin-top:2px">0 ק"מ × ₪1.50</div></div>
-<button class="btn-submit normal" onclick="submitKm()">📤 שלח דיווח</button>
-<button class="btn-cancel" onclick="closeKm()">ביטול</button>
-</div></div>
-<!-- RECEIPT MODAL -->
-<div class="overlay" id="rec-overlay" style="align-items:center;padding:20px">
-<div style="background:#fff;border-radius:16px;padding:22px;width:100%;max-width:360px;box-shadow:0 4px 24px rgba(0,0,0,.12)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-size:16px;font-weight:900">📄 קבלה מקורית</div><button onclick="closeRec()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#64748B">✕</button></div><div id="rec-content"></div></div>
-</div>
+
 <script>
-const SUPABASE_URL = "https://soqxqmpoertwxkwhlzen.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvcXhxbXBvZXJ0d3hrd2hsemVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODc0NzYsImV4cCI6MjA5MzA2MzQ3Nn0.umDsrKOVKyA9tWnwtDHy-TgXl6MFT_JzA_fmNbCXeZI";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const KM_RATE = 1.50;
-const CASH_THRESH = 30;
-const S = {
-  role:"", name:"",
-  pettyBal:2890, pettySpent:5610, pettyBudget:8500,
-  refillPending:false, refillAmt:0, pendingPettyReceipts:[],
-  scanRoute:"petty", scanCat:"מזון", scanFlagged:false, scanFlaggedFields:[]
-};
-let nextId = 400;
-let coords = [
-  {id:1,name:"דנה שמש",role:"עובד שטח",email:"dana@ngo.il",active:true,color:"#3B82F6",ini:"דש",reports:[
-    {id:101,vendor:"דומינוס",cat:"מזון",amt:180,route:"petty",icon:"🍕",date:"07/01",approved:false,flagged:false,conf:{vendor:95,date:92,amt:97}},
-    {id:102,vendor:"ארומה",cat:"קפה",amt:24,route:"personal",icon:"☕",date:"06/01",approved:false,flagged:false,conf:{vendor:88,date:82,amt:91}}
-  ]},
-  {id:2,name:"שירה מנדל",role:"עובד שטח",email:"shira@ngo.il",active:true,color:"#0D9488",ini:"שמ",reports:[
-    {id:201,vendor:"רמי לוי",cat:"מזון",amt:156.4,route:"petty",icon:"🛒",date:"07/01",approved:false,flagged:true,conf:{vendor:88,date:41,amt:62},flagFields:["תאריך (41%)","סכום (62%)"]},
-    {id:202,vendor:"נסיעות ק\"מ",cat:"תחבורה",amt:38,route:"km",icon:"🚗",date:"05/01",approved:false,flagged:false,conf:null}
-  ]},
-  {id:3,name:"רוני אברהם",role:"עובד שטח",email:"roni@ngo.il",active:true,color:"#7C3AED",ini:"רא",reports:[
-    {id:301,vendor:"סופר-פארם",cat:"ציוד",amt:95,route:"petty",icon:"🏥",date:"04/01",approved:false,flagged:false,conf:{vendor:93,date:88,amt:96}}
-  ]},
-  {id:4,name:"רות לוי",role:"עובד שטח",email:"ruth@ngo.il",active:false,color:"#94A3B8",ini:"רל",reports:[]}
-];
-let programs = [
-  {id:1,name:"תוכנית נוער בסיכון",icon:"🧑‍🤝‍🧑",region:"מחוז תל אביב",pettyBudget:8500,color:"#3B82F6",managers:[{id:"m1",name:"מיכל כהן",role:"מנהלת תוכנית",email:"michal@ngo.il"}],staffCount:3},
-  {id:2,name:"תוכנית קשישים בקהילה",icon:"🧓",region:"מחוז מרכז",pettyBudget:6500,color:"#0D9488",managers:[{id:"m2",name:"רחל אברהם",role:"מנהלת תוכנית",email:"rachel@ngo.il"}],staffCount:4}
-];
-let finPettyRows = [
-  {date:"07/01",name:"דנה שמש",vendor:"דומינוס",cat:"מזון",amt:180,flagged:false},
-  {date:"07/01",name:"שירה מנדל",vendor:"רמי לוי",cat:"מזון",amt:156.4,flagged:true,flagFields:["תאריך","סכום"]}
-];
-let finPersonalRows = [
-  {date:"06/01",name:"דנה שמש",vendor:"ארומה",cat:"קפה",amt:24,flagged:false},
-  {date:"05/01",name:"שירה מנדל",vendor:"נסיעות ק\"מ",cat:"תחבורה",amt:38,flagged:false}
-];
-let nextMid=5, nextProgId=3;
-function toast(msg, type="") {
-  const c = document.getElementById("toast-container");
-  const el = document.createElement("div");
-  el.className = "toast-item" + (type ? " " + type : "");
-  el.textContent = msg;
-  c.appendChild(el);
-  setTimeout(() => el.remove(), 3500);
+const SUPA_URL = 'https://soqxqmpoertwxkwhlzen.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvcXhxbXBvZXJ0d3hrd2hsemVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODc0NzYsImV4cCI6MjA5MzA2MzQ3Nn0.umDsrKOVKyA9tWnwtDHy-TgXl6MFT_JzA_fmNbCXeZI';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let currentUser = null;
+let currentProfile = null;
+let viewingRole = null;
+
+function toast(msg, type='ok', dur=3500) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast-item ' + type;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), dur);
 }
-function toggleDemoHints() {
-  const btn = document.getElementById("demo-toggle-btn");
-  const grid = document.getElementById("demo-grid");
-  btn.classList.toggle("open");
-  grid.classList.toggle("open");
+
+function showLoading(v) {
+  document.getElementById('loading').style.display = v ? 'flex' : 'none';
 }
-function fillDemo(email, pw) {
-  document.getElementById("l-email").value = email;
-  document.getElementById("l-pass").value = pw;
-  toast("פרטים מולאו — לחץ כניסה ✓", "ok");
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
 }
-function togglePwd() {
-  const f = document.getElementById("l-pass");
-  f.type = f.type === "password" ? "text" : "password";
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
 }
+
+function fillLogin(email, pass) {
+  document.getElementById('login-email').value = email;
+  document.getElementById('login-pass').value = pass;
+  document.getElementById('login-email').focus();
+}
+
+document.getElementById('demo-toggle').addEventListener('click', function() {
+  const body = document.getElementById('demo-body');
+  const arrow = document.getElementById('demo-arrow');
+  body.classList.toggle('open');
+  arrow.textContent = body.classList.contains('open') ? '▲' : '▼';
+});
+
+document.getElementById('login-pass').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doLogin();
+});
+
+document.getElementById('btn-login-submit').addEventListener('click', doLogin);
+
 async function doLogin() {
-  const email = document.getElementById("l-email").value.trim().toLowerCase();
-  const pw = document.getElementById("l-pass").value;
-  const errEl = document.getElementById("login-err");
-  const btnEl = document.getElementById("login-btn");
-  const loadEl = document.getElementById("login-loading");
-  errEl.style.display = "none";
-  if (!email || !pw) { errEl.textContent = "❌ נא להזין אימייל וסיסמה"; errEl.style.display = "block"; return; }
-  btnEl.disabled = true;
-  loadEl.style.display = "block";
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-err');
+  const btn = document.getElementById('btn-login-submit');
+
+  errEl.style.display = 'none';
+  if (!email || !pass) {
+    errEl.textContent = 'נא למלא אימייל וסיסמה';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'מתחבר...';
+
   try {
-    const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
-    if (error || !data.user) {
-      errEl.textContent = "❌ אימייל או סיסמה שגויים";
-      errEl.style.display = "block";
-      document.getElementById("l-pass").value = "";
-      return;
-    }
-    const emailRoleMap = {
-      "dana@pettycash.app": { role:"coordinator", name:"דנה שמש" },
-      "michal@pettycash.app": { role:"manager", name:"מיכל כהן" },
-      "yossi@pettycash.app": { role:"finance", name:"יוסי לוי" },
-      "hila@pettycash.app": { role:"admin", name:"הילה רז" },
-      "yasminko27@gmail.com": { role:"admin", name:"יסמין" }
-    };
-    let role = "coordinator";
-    let name = email.split("@")[0];
-    const mapped = emailRoleMap[email];
-    if (mapped) { role = mapped.role; name = mapped.name; }
-    try {
-      const { data: profile, error: pErr } = await sb.from("profiles").select("full_name,role,org_id").eq("id", data.user.id).single();
-      if (!pErr && profile?.full_name) {
-        const roleMap = { field:"coordinator", manager:"manager", finance:"finance", admin:"admin" };
-        role = roleMap[profile.role] || role;
-        name = profile.full_name;
-      }
-    } catch(e) {}
-    enterApp(name, role);
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+
+    const profile = await loadProfile(data.user);
+    if (!profile) throw new Error('פרופיל משתמש לא נמצא. פנה למנהל המערכת.');
+
+    currentUser = data.user;
+    currentProfile = profile;
+    viewingRole = profile.role;
+    initApp();
+    showApp();
+    toast('ברוך הבא, ' + profile.full_name + '!', 'ok');
   } catch(e) {
-    errEl.textContent = "❌ שגיאת חיבור — נסה שוב";
-    errEl.style.display = "block";
+    errEl.textContent = e.message === 'Invalid login credentials' ? 'אימייל או סיסמה שגויים' : (e.message || 'שגיאת כניסה');
+    errEl.style.display = 'block';
   } finally {
-    btnEl.disabled = false;
-    loadEl.style.display = "none";
+    btn.disabled = false;
+    btn.textContent = 'כניסה למערכת';
   }
 }
-function enterApp(name, role) {
-  S.name = name; S.role = role;
-  document.getElementById("login-screen").style.display = "none";
-  document.getElementById("app-screen").style.display = "block";
-  document.getElementById("hdr-name").textContent = name;
-  const firstName = name.split(" ")[0];
-  const greetEl = document.getElementById("coord-greeting");
-  if (greetEl) greetEl.textContent = "שלום, " + firstName + " 👋";
-  const phoneEl = document.getElementById("phone-greeting");
-  if (phoneEl) phoneEl.textContent = "שלום, " + firstName;
-  buildNav(role);
-  showPanel(role);
-  updateTime(); setInterval(updateTime, 60000);
-  toast("ברוך הבא, " + name + "! 🎉", "ok");
-  appendLog('<span class="lg-ok">&gt; AUTH: ' + name + ' logged in [' + role + ']</span>');
+
+async function loadProfile(user) {
+  const { data, error } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  if (error) {
+    console.error('Profile error:', error);
+    return null;
+  }
+  return data;
 }
+
 async function doLogout() {
   await sb.auth.signOut();
-  S.role = ""; S.name = "";
-  document.getElementById("app-screen").style.display = "none";
-  document.getElementById("login-screen").style.display = "flex";
-  document.getElementById("l-email").value = "";
-  document.getElementById("l-pass").value = "";
-  document.getElementById("login-err").style.display = "none";
-  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  currentUser = null;
+  currentProfile = null;
+  viewingRole = null;
+  showLogin();
+  toast('יצאת מהמערכת', 'warn');
 }
-function buildNav(role) {
-  const nav = document.getElementById("hdr-nav");
-  nav.innerHTML = "";
-  const all = [{r:"coordinator",l:"📱 שטח"},{r:"manager",l:"📊 מנהלת"},{r:"finance",l:"🏦 כספים"},{r:"admin",l:"👤 Admin"}];
-  const vis = {coordinator:["coordinator"],manager:["coordinator","manager"],finance:["coordinator","manager","finance"],admin:["coordinator","manager","finance","admin"]};
-  (vis[role] || ["coordinator"]).forEach(r => {
-    const p = all.find(a => a.r === r); if (!p) return;
-    const el = document.createElement("div");
-    el.className = "nav-pill" + (r === role ? " active" : "");
-    el.dataset.role = r;
-    el.textContent = p.l;
-    el.onclick = () => showPanel(r);
-    nav.appendChild(el);
+
+function switchView(role) {
+  viewingRole = role;
+  document.querySelectorAll('.btn-role-view').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick').includes("'" + role + "'"));
   });
+  renderNav();
+  renderContent();
+  toast('מציג ממשק: ' + roleLabel(role), 'warn', 2000);
 }
-function showPanel(role) {
-  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
-  const el = document.getElementById("panel-" + role);
-  if (el) el.classList.add("active");
-  document.querySelectorAll(".nav-pill").forEach(p => p.classList.toggle("active", p.dataset.role === role));
-  S.role = role;
-  if (role === "coordinator") updatePhoneBar();
-  if (role === "manager") { renderCoords(); renderApproved(); renderTeam(); updateCashBar(); }
-  if (role === "finance") { updateFinStats(); renderFinPetty(); renderFinPersonal(); renderFinPrograms(); }
-  if (role === "admin") renderAdmin();
+
+function roleLabel(r) {
+  return {field:'רכזת שטח', manager:'מנהל', finance:'כספים', admin:'אדמין'}[r] || r;
 }
-function updateTime() {
-  const n = new Date();
-  const t = n.getHours().toString().padStart(2,"0") + ":" + n.getMinutes().toString().padStart(2,"0");
-  const el = document.getElementById("phone-time");
-  if (el) el.textContent = t;
-}
-function appendLog(html) {
-  const b = document.getElementById("log-box");
-  if (!b) return;
-  b.innerHTML += html + "<br>";
-  b.scrollTop = b.scrollHeight;
-}
-function confBadge(v) {
-  const cls = v >= 90 ? "conf-hi" : v >= 70 ? "conf-mid" : "conf-lo";
-  return `<span class="conf-badge ${cls}">${v}%</span>`;
-}
-function updatePhoneBar() {
-  const el = document.getElementById("phone-bal");
-  if (el) el.textContent = "₪" + S.pettyBal.toLocaleString("he-IL");
-}
-function updateCashBar() {
-  const pct = Math.round(S.pettyBal / S.pettyBudget * 100);
-  document.getElementById("cash-amount").textContent = "₪" + S.pettyBal.toLocaleString("he-IL");
-  document.getElementById("cash-pct-text").textContent = pct + "%";
-  document.getElementById("cash-bar-fill").style.width = pct + "%";
-  document.getElementById("cash-spent-text").textContent = "הוצאות: ₪" + S.pettySpent.toLocaleString("he-IL");
-  document.getElementById("cash-bar-fill").style.background = pct < 20 ? "linear-gradient(90deg,#DC2626,#F87171)" : pct < 40 ? "linear-gradient(90deg,#D97706,#FCD34D)" : "linear-gradient(90deg,#0D9488,#2DD4BF)";
-  const alert = document.getElementById("low-cash-alert");
-  if (alert) alert.classList.toggle("show", pct < CASH_THRESH && !S.refillPending);
-  updatePhoneBar();
-}
-function mgrTab(el, tab) {
-  document.querySelectorAll("#panel-manager .tab").forEach(t => t.classList.remove("active"));
-  el.classList.add("active");
-  ["pending","approved","team"].forEach(t => document.getElementById("mgr-tab-" + t).style.display = t === tab ? "block" : "none");
-}
-function renderCoords() {
-  const list = document.getElementById("exp-list-pending");
-  const pending = coords.filter(c => c.reports.some(r => !r.approved));
-  if (!pending.length) { list.innerHTML = '<div style="text-align:center;padding:30px;color:#64748B;font-size:13px">✅ אין קבלות הממתינות לאישור</div>'; return; }
-  list.innerHTML = "";
-  pending.forEach(coord => {
-    const pr = coord.reports.filter(r => !r.approved);
-    const total = pr.reduce((s,r) => s+r.amt, 0);
-    const hasFl = pr.some(r => r.flagged);
-    const div = document.createElement("div");
-    div.className = "exp-group" + (hasFl ? " open" : "");
-    div.innerHTML = `<div class="exp-group-hdr" onclick="this.parentElement.classList.toggle('open')">
-      <div class="grp-left"><div class="grp-av" style="background:${coord.color}20;color:${coord.color}">${coord.ini}</div>
-      <div><div class="grp-name">${coord.name}</div><div class="grp-meta">${coord.role} · ${pr.length} קבלות</div></div></div>
-      <div class="grp-right">${hasFl ? '<span class="badge badge-flag">⚠️ מסומן</span>' : '<span class="badge badge-pend">ממתין</span>'}<div class="grp-total">₪${total.toFixed(0)}</div><div class="grp-chev">▼</div></div>
-    </div><div class="exp-group-body">${pr.map(r => expRow(r, coord)).join("")}</div>`;
-    list.appendChild(div);
-  });
-  document.getElementById("pending-cnt").textContent = coords.reduce((s,c) => s + c.reports.filter(r => !r.approved).length, 0);
-}
-function expRow(r, coord) {
-  const fl = r.flagged ? "flagged" : "";
-  const fp = r.flagged ? '<span class="flag-pill">⚠️ AI סימן</span>' : "";
-  const badge = r.route==="petty" ? '<span class="badge badge-blue">קופה</span>' : r.route==="personal" ? '<span class="badge badge-pend">החזר</span>' : '<span class="badge badge-ok">ק"מ</span>';
-  return `<div class="exp-row ${fl}" id="erow-${r.id}">
-    <div class="exp-row-l"><div class="exp-icon" style="background:${coord.color}18">${r.icon}</div>
-    <div><div class="exp-name">${r.vendor}</div><div class="exp-meta">${r.cat} · ${r.date} ${fp}</div></div></div>
-    <div class="exp-row-r">${badge}<div class="exp-amt">₪${r.amt.toFixed(0)}</div>
-    <span style="cursor:pointer;font-size:17px" onclick="openRec(${JSON.stringify(r).replace(/`/g,'')})">📄</span>
-    <button class="btn-approve" onclick="approveReport(${r.id},${coord.id})">✓ אשר</button></div>
-  </div>`;
-}
-function approveReport(rid, cid) {
-  const coord = coords.find(c => c.id === cid);
-  const r = coord?.reports.find(r => r.id === rid);
-  if (!r) return;
-  r.approved = true;
-  if (r.route === "petty") { S.pettyBal -= r.amt; S.pettySpent += r.amt; S.pendingPettyReceipts.push({...r, name:coord.name}); }
-  const row = document.getElementById("erow-" + rid);
-  if (row) { row.style.animation = "flashOk 1s ease forwards"; setTimeout(() => row.remove(), 900); }
-  appendLog(`<span class="lg-ok">&gt; APPROVED: ${coord.name} — ${r.vendor} ₪${r.amt}</span>`);
-  toast("✅ אושר: " + r.vendor + " ₪" + r.amt, "ok");
-  setTimeout(() => { renderCoords(); renderApproved(); updateCashBar(); }, 950);
-}
-function renderApproved() {
-  const list = document.getElementById("exp-list-approved");
-  const ap = coords.flatMap(c => c.reports.filter(r => r.approved).map(r => ({...r,coordName:c.name,coordColor:c.color,coordIni:c.ini})));
-  if (!ap.length) { list.innerHTML = '<div style="text-align:center;padding:30px;color:#64748B;font-size:13px">אין קבלות מאושרות עדיין</div>'; return; }
-  list.innerHTML = ap.map(r => `<div class="exp-row" style="opacity:.6">
-    <div class="exp-row-l"><div class="exp-icon" style="background:${r.coordColor}18">${r.icon}</div>
-    <div><div class="exp-name">${r.vendor} — ${r.coordName}</div><div class="exp-meta">${r.cat} · ${r.date}</div></div></div>
-    <div class="exp-row-r"><div class="exp-amt">₪${r.amt.toFixed(0)}</div><span style="color:#16A34A;font-size:16px">✓</span></div></div>`).join("");
-}
-function renderTeam() {
-  document.getElementById("team-list").innerHTML = coords.map(c => `
-    <div class="member-row"
-    <div style="display:flex;align-items:center;gap:9px"><div class="member-av" style="background:${c.color}20;color:${c.color}">${c.ini}</div>
-    <div class="member-info"><div class="member-name">${c.name}</div><div class="member-role">${c.role}</div><div class="member-email">${c.email}</div></div></div>
-    <div style="display:flex;align-items:center;gap:8px"><span style="background:${c.active?"#F0FDF4":"#F8FAFC"};color:${c.active?"#16A34A":"#94A3B8"};padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700">${c.active?"פעיל":"לא פעיל"}</span>
-    <label class="tog"><input type="checkbox" ${c.active?"checked":""} onchange="toggleMember(${c.id},this.checked)"><div class="tt"></div><div class="tth"></div></label></div></div>`).join("");
-}
-function toggleMember(id, active) {
-  const m = coords.find(c => c.id === id); if (m) { m.active = active; renderTeam(); }
-  toast((active ? "✅" : "🔴") + " " + (m?.name) + " — " + (active ? "הופעל" : "הושהה"));
-}
-function toggleAddMember() { const f = document.getElementById("add-member-form"); f.style.display = f.style.display==="block" ? "none" : "block"; }
-function addMember() {
-  const name = document.getElementById("new-member-name").value.trim();
-  const email = document.getElementById("new-member-email").value.trim();
-  if (!name) return;
-  const ini = name.split(" ").map(w=>w[0]).join("").slice(0,2);
-  coords.push({id:nextId++,name,role:"עובד שטח",email:email||ini.toLowerCase()+"@ngo.il",active:true,color:"#3B82F6",ini,reports:[]});
-  renderTeam(); toggleAddMember();
-  document.getElementById("new-member-name").value=""; document.getElementById("new-member-email").value="";
-  toast("✅ " + name + " נוסף לצוות", "ok");
-}
-function sendToFinance() {
-  const receipts = S.pendingPettyReceipts;
-  if (!receipts.length) { toast("אין קבלות מאושרות לשליחה"); return; }
-  const total = receipts.reduce((s,r) => s+r.amt, 0);
-  const cnt = receipts.length;
-  S.refillPending = true; S.refillAmt = total;
-  receipts.forEach(r => finPettyRows.push({date:r.date||"היום",name:r.name,vendor:r.vendor,cat:r.cat,amt:r.amt,flagged:r.flagged||false}));
-  S.pendingPettyReceipts = [];
-  document.getElementById("low-cash-alert").classList.remove("show");
-  document.getElementById("refill-sub").textContent = "נשלחו " + cnt + " קבלות מאושרות לאישורך";
-  document.getElementById("refill-amt").textContent = "₪" + total.toFixed(2);
-  document.getElementById("refill-card").classList.add("show");
-  appendLog(`<span class="lg-warn">&gt; REFILL_REQUEST: ${cnt} קבלות (₪${total.toFixed(2)}) → כספים</span>`);
-  toast("📤 " + cnt + " קבלות נשלחו לכספים", "warn");
-}
-function finTab(el, tab) {
-  document.querySelectorAll("#panel-finance .tab").forEach(t => t.classList.remove("active")); el.classList.add("active");
-  ["petty","personal","programs"].forEach(t => { const e = document.getElementById("fin-tab-"+t); if(e) e.style.display = t===tab?"block":"none"; });
-}
-function updateFinStats() {
-  document.getElementById("fin-petty-cnt").textContent = finPettyRows.length;
-  document.getElementById("fin-flag-cnt").textContent = finPettyRows.filter(r=>r.flagged).length;
-  document.getElementById("fin-personal-cnt").textContent = finPersonalRows.length;
-  const tot = finPettyRows.reduce((s,r)=>s+r.amt,0) + finPersonalRows.reduce((s,r)=>s+r.amt,0);
-  document.getElementById("fin-total").textContent = "₪" + Math.round(tot);
-  document.getElementById("fin-petty-badge").textContent = finPettyRows.length;
-}
-function renderFinPetty() {
-  document.getElementById("fin-petty-rows").innerHTML = finPettyRows.map(r => `
-    <div class="fin-tr${r.flagged?" flagged":""}">
-    <div>${r.date}</div><div><div style="font-weight:600">${r.vendor}</div><div style="font-size:10px;color:#64748B">${r.name}</div></div>
-    <div style="font-weight:700">₪${r.amt.toFixed(0)}</div>
-    <div>${r.flagged?'<span class="badge badge-flag">מסומן</span>':'<span class="badge badge-ok">תקין</span>'}</div>
-    <div><button class="btn-approve" onclick="finPay(this)">✓ שולם</button></div></div>`).join("");
-}
-function renderFinPersonal() {
-  document.getElementById("fin-personal-rows").innerHTML = finPersonalRows.map(r => `
-    <div class="fin-tr"><div>${r.date}</div><div><div style="font-weight:600">${r.vendor}</div><div style="font-size:10px;color:#64748B">${r.name}</div></div>
-    <div style="font-weight:700">₪${r.amt.toFixed(0)}</div>
-    <div><span class="badge badge-pend">ממתין</span></div>
-    <div><button class="btn-approve" onclick="finPay(this)">✓ שולם</button></div></div>`).join("");
-}
-function finPay(btn) {
-  const row = btn.closest(".fin-tr");
-  row.style.animation = "flashOk 1s ease forwards";
-  setTimeout(() => row.remove(), 900);
-  toast("✅ תשלום אושר", "ok");
-}
-function approveRefill() {
-  document.getElementById("refill-card").classList.remove("show");
-  S.pettyBal += S.refillAmt; S.refillPending = false;
-  updateCashBar();
-  appendLog(`<span class="lg-ok">&gt; REFILL_APPROVED: ₪${S.refillAmt.toFixed(2)} → מנהלת</span>`);
-  toast("✅ קופה חודשה: ₪" + S.refillAmt.toFixed(2), "ok");
-}
-function renderFinPrograms() {
-  document.getElementById("fin-programs-list").innerHTML = programs.map(p => `
-    <div class="card"><div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:11px"><div style="width:40px;height:40px;border-radius:11px;background:${p.color}18;display:flex;align-items:center;justify-content:center;font-size:18px">${p.icon}</div><div><div style="font-size:14px;font-weight:700">${p.name}</div><div style="font-size:10px;color:#64748B">${p.region}</div></div></div><div style="text-align:left"><div style="font-size:16px;font-weight:900;color:${p.color}">₪${p.pettyBudget.toLocaleString()}</div><div style="font-size:9px;color:#64748B">תקציב קופה</div></div></div></div>`).join("");
-}
-function renderAdmin() {
-  document.getElementById("adm-progs").textContent = programs.length;
-  document.getElementById("adm-mgrs").textContent = programs.reduce((s,p)=>s+p.managers.length,0);
-  document.getElementById("adm-coords").textContent = programs.reduce((s,p)=>s+p.staffCount,0);
-  document.getElementById("adm-budget").textContent = "₪" + Math.round(programs.reduce((s,p)=>s+p.pettyBudget,0)/1000) + "K";
-  const list = document.getElementById("programs-list"); list.innerHTML = "";
-  programs.forEach(prog => {
-    const div = document.createElement("div"); div.className = "prog-card";
-    div.innerHTML = `<div class="prog-hdr">
-      <div class="prog-left"><div class="prog-icon" style="background:${prog.color}18">${prog.icon}</div>
-      <div><div class="prog-name">${prog.name}</div><div class="prog-meta">${prog.region} · ${prog.staffCount} עובדי שטח</div></div></div>
-      <div style="text-align:left"><div style="font-size:16px;font-weight:900;color:${prog.color}">₪${prog.pettyBudget.toLocaleString()}</div><div style="font-size:9px;color:#64748B">תקציב קופה</div></div></div>
-      <div class="prog-body">
-        <div style="font-size:10px;font-weight:700;color:#64748B;letter-spacing:.5px;text-transform:uppercase;margin-bottom:9px">מנהלות תוכנית</div>
-        ${prog.managers.length===0 ? '<div style="background:#FFFBEB;border:1px solid rgba(217,119,6,.3);border-radius:8px;padding:10px 13px;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:#D97706">⚠️ אין מנהלת משויכת</div></div>' : prog.managers.map(m => `
-        <div class="mgr-row"><div style="display:flex;align-items:center;gap:9px"><div class="mgr-av">${m.name.split(" ").map(w=>w[0]).join("").slice(0,2)}</div>
-        <div class="mgr-info"><div class="mgr-name">${m.name}</div><div class="mgr-email">${m.email}</div></div></div>
-        <div style="display:flex;align-items:center;gap:8px"><span class="badge badge-ok">פעילה</span><button style="padding:3px 9px;border-radius:20px;background:#FEF2F2;color:#DC2626;border:1px solid rgba(220,38,38,.2);font-family:Heebo,sans-serif;font-size:10px;font-weight:700;cursor:pointer" onclick="removeMgr(${prog.id},'${m.id}')">הסר</button></div></div>
-        `).join("")}
-        <div style="margin-top:9px"><button class="btn-add" onclick="toggleAddMgr(${prog.id})">+ הוספת מנהלת</button>
-        <div class="add-form" id="addmgr-${prog.id}"><div class="g2"><div><label style="font-size:10px;font-weight:700;color:#64748B;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:4px">שם</label><input type="text" id="nm-${prog.id}" class="fi" placeholder="שם מלא"></div><div><label style="font-size:10px;font-weight:700;color:#64748B;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:4px">אימייל</label><input type="email" id="ne-${prog.id}" class="fi" placeholder="email@org.il" style="direction:ltr;text-align:left"></div></div><div style="display:flex;gap:7px"><button class="btn-cfm" onclick="addMgr(${prog.id})">✓ הוסף</button><button class="btn-cnl" onclick="toggleAddMgr(${prog.id})">ביטול</button></div></div></div>
-      </div>`;
-    list.appendChild(div);
-  });
-}
-function toggleAddMgr(id) { const f = document.getElementById("addmgr-"+id); f.style.display = f.style.display==="block"?"none":"block"; }
-function addMgr(progId) {
-  const name = document.getElementById("nm-"+progId).value.trim();
-  const email = document.getElementById("ne-"+progId).value.trim();
-  if (!name) return;
-  const p = programs.find(p => p.id === progId);
-  p.managers.push({id:"m"+nextMid++,name,role:"מנהלת תוכנית",email:email||name.split(" ")[0].toLowerCase()+"@ngo.il"});
-  renderAdmin(); toast("✅ " + name + ' קיבלה גישה ל"' + p.name + '"',"ok");
-}
-function removeMgr(progId, mgrId) {
-  const p = programs.find(p => p.id === progId);
-  const m = p?.managers.find(m => m.id === mgrId); if (!m) return;
-  if (p.managers.length===1 && !confirm("⚠️ " + m.name + " היא המנהלת היחידה. להמשיך?")) return;
-  p.managers = p.managers.filter(m => m.id !== mgrId);
-  renderAdmin(); toast("🔴 גישת " + m.name + " הוסרה");
-}
-function toggleAddProgram() { const f = document.getElementById("add-program-form"); f.style.display = f.style.display==="block"?"none":"block"; }
-function addProgram() {
-  const name = document.getElementById("new-prog-name").value.trim();
-  const region = document.getElementById("new-prog-region").value.trim();
-  if (!name) return;
-  const colors = ["#3B82F6","#0D9488","#7C3AED","#D97706","#DC2626"];
-  programs.push({id:nextProgId++,name,icon:"📋",region:region||"לא הוגדר",pettyBudget:5000,color:colors[programs.length%colors.length],managers:[],staffCount:0});
-  renderAdmin(); toggleAddProgram();
-  document.getElementById("new-prog-name").value=""; document.getElementById("new-prog-region").value="";
-  toast("✅ תוכנית \"" + name + "\" נוצרה", "ok");
-}
-function openScanner() {
-  S.scanRoute="petty"; S.scanCat="מזון"; S.scanFlagged=false; S.scanFlaggedFields=[];
-  document.getElementById("scan-overlay").classList.add("open");
-  document.getElementById("scan-result").style.display = "none";
-  document.getElementById("scan-box").style.display = "flex";
-  document.getElementById("scan-status").innerHTML = '<span class="dots"><span></span><span></span><span></span></span> לחץ לסימולציית סריקה';
-  document.querySelectorAll(".cat-opt").forEach((o,i) => o.classList.toggle("sel", i===0));
-  document.querySelectorAll(".route-opt").forEach((o,i) => o.classList.toggle("sel", i===0));
-}
-function closeScanner() { document.getElementById("scan-overlay").classList.remove("open"); }
-function triggerScan() {
-  document.getElementById("scan-status").innerHTML = '<span class="dots"><span></span><span></span><span></span></span> AI מנתח קבלה...';
-  document.getElementById("scan-box").style.pointerEvents = "none";
-  setTimeout(() => {
-    const samples = [
-      {vendor:"דומינוס",amt:"156",date:"08/01",vc:95,ac:97,dc:92,fl:false},
-      {vendor:"ארומה",amt:"44",date:"08/01",vc:88,ac:91,dc:85,fl:false},
-      {vendor:"רמי לוי",amt:"",date:"",vc:88,ac:62,dc:41,fl:true,ff:["סכום (62%)","תאריך (41%)"]},
-      {vendor:"סופר-פארם",amt:"95",date:"08/01",vc:93,ac:96,dc:88,fl:false}
-    ];
-    const s = samples[Math.floor(Math.random()*samples.length)];
-    showScanResult(s);
-  }, 1500);
-}
-function showScanResult(s) {
-  document.getElementById("scan-box").style.display = "none";
-  document.getElementById("scan-result").style.display = "block";
-  document.getElementById("sc-vendor").value = s.vendor;
-  document.getElementById("sc-amt").value = s.amt || "";
-  document.getElementById("sc-date").value = s.date || "";
-  document.getElementById("conf-vendor").outerHTML = confBadge(s.vc).replace('class="conf-badge','id="conf-vendor" class="conf-badge');
-  document.getElementById("conf-amt").outerHTML = confBadge(s.ac).replace('class="conf-badge','id="conf-amt" class="conf-badge');
-  document.getElementById("conf-date").outerHTML = confBadge(s.dc).replace('class="conf-badge','id="conf-date" class="conf-badge');
-  S.scanFlagged = s.fl; S.scanFlaggedFields = s.ff || [];
-  const fw = document.getElementById("flag-warn-box");
-  if (s.fl) {
-    fw.classList.add("show");
-    document.getElementById("flag-warn-list").innerHTML = (s.ff||[]).map(f => "<li>• "+f+"</li>").join("");
-    document.getElementById("btn-submit-scan").className = "btn-submit flagged";
-    document.getElementById("btn-submit-scan").textContent = "📤 שלח עם סימון";
-  } else {
-    fw.classList.remove("show");
-    document.getElementById("btn-submit-scan").className = "btn-submit normal";
-    document.getElementById("btn-submit-scan").textContent = "📤 שלח קבלה";
+
+function initApp() {
+  const p = currentProfile;
+  document.getElementById('hdr-name').textContent = p.full_name;
+  document.getElementById('hdr-role-label').textContent = roleLabel(p.role);
+
+  if (p.role === 'admin') {
+    document.getElementById('role-switch-bar').style.display = 'flex';
   }
-  document.getElementById("scan-status").textContent = "✅ AI זיהה את הקבלה";
-  document.getElementById("scan-box").style.pointerEvents = "";
+
+  renderNav();
+  renderContent();
 }
-function selCat(el, cat) { S.scanCat = cat; document.querySelectorAll(".cat-opt").forEach(o => o.classList.toggle("sel", o===el)); }
-function selRoute(el, route) { S.scanRoute = route; document.querySelectorAll(".route-opt").forEach(o => o.classList.toggle("sel", o===el)); }
-function submitScan() {
-  const vendor = document.getElementById("sc-vendor").value.trim();
-  const amt = parseFloat(document.getElementById("sc-amt").value);
-  const date = document.getElementById("sc-date").value || "היום";
-  if (!vendor || isNaN(amt) || amt <= 0) { toast("⚠️ נא למלא ספק וסכום", "warn"); return; }
-  const icons = {מזון:"🍕",ציוד:"📦",תחבורה:"🚌",קפה:"☕",אחר:"📋",כספים:"💳","ק\"מ":"🚗"};
-  const r = {id:nextId++,vendor,cat:S.scanCat,amt,route:S.scanRoute,icon:icons[S.scanCat]||"📋",date,approved:false,flagged:S.scanFlagged,flagFields:S.scanFlaggedFields,conf:null};
-  const ac = coords.find(c => c.active);
-  if (ac) ac.reports.push(r);
-  closeScanner();
-  appendLog(`<span class="lg-blue">&gt; RECEIPT: ${vendor} ₪${amt} [${S.scanRoute}]${S.scanFlagged?" ⚠️":""}</span>`);
-  toast(S.scanFlagged ? "⚠️ קבלה נשלחה עם סימון AI" : "✅ קבלה נשלחה לאישור", S.scanFlagged ? "warn" : "ok");
+
+function getTabs() {
+  const role = viewingRole;
+  const tabs = [];
+  tabs.push({ id: 'field', label: '📋 הגשת דיווח' });
+  if (role === 'manager' || role === 'finance' || role === 'admin') {
+    tabs.push({ id: 'manager', label: '✅ אישורים' });
+  }
+  if (role === 'finance' || role === 'admin') {
+    tabs.push({ id: 'finance', label: '💰 דוחות כספיים' });
+  }
+  if (role === 'admin') {
+    tabs.push({ id: 'admin', label: '⚙️ ניהול' });
+  }
+  return tabs;
 }
-function openKm() { document.getElementById("km-overlay").classList.add("open"); }
-function closeKm() { document.getElementById("km-overlay").classList.remove("open"); }
-function calcKm() {
-  const d = parseFloat(document.getElementById("km-dist").value) || 0;
-  if (d > 0) {
-    const amt = (d * KM_RATE).toFixed(2);
-    document.getElementById("km-calc-amt").textContent = "₪" + amt;
-    document.getElementById("km-calc-sub").textContent = d + ' ק"מ × ₪' + KM_RATE;
-    document.getElementById("km-calc-box").style.display = "block";
-  } else { document.getElementById("km-calc-box").style.display = "none"; }
+
+function renderNav() {
+  const tabs = getTabs();
+  const nav = document.getElementById('main-nav');
+  nav.innerHTML = tabs.map((t, i) =>
+    '<button class="nav-tab' + (i===0?' active':'') + '" data-tab="' + t.id + '" onclick="showTab(\'' + t.id + '\')">' + t.label + '</button>'
+  ).join('');
 }
-function submitKm() {
-  const d = parseFloat(document.getElementById("km-dist").value) || 0;
-  if (!d) { toast("⚠️ נא להזין מרחק", "warn"); return; }
-  const amt = d * KM_RATE;
-  const from = document.getElementById("km-from").value || "מקור";
-  const to = document.getElementById("km-to").value || "יעד";
-  const r = {id:nextId++,vendor:"נסיעה: "+from+" → "+to,cat:'ק"מ',amt,route:"km",icon:"🚗",date:"היום",approved:false,flagged:false,conf:null};
-  const ac = coords.find(c => c.active); if (ac) ac.reports.push(r);
-  closeKm();
-  appendLog(`<span class="lg-blue">&gt; KM: ${d}km = ₪${amt.toFixed(2)}</span>`);
-  toast("✅ דיווח ק\"מ — ₪" + amt.toFixed(2), "ok");
+
+function showTab(id) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === id));
+  document.querySelectorAll('.page-section').forEach(s => s.classList.toggle('active', s.id === 'sec-'+id));
 }
-function openRec(r) {
-  if (typeof r === "string") { try { r = JSON.parse(r); } catch(e) { return; } }
-  document.getElementById("rec-overlay").classList.add("open");
-  const c = r.conf || {vendor:95,date:88,amt:96};
-  document.getElementById("rec-content").innerHTML = `
-    <div style="background:#FFFEF8;border:1px solid #E8E2C8;border-radius:10px;padding:16px;font-family:monospace;font-size:11px;line-height:1.9">
-    <div style="font-size:14px;font-weight:700;font-family:Heebo,sans-serif;text-align:center;margin-bottom:8px;border-bottom:1px dashed #C8C0A0;padding-bottom:8px">${r.vendor}</div>
-    <div style="display:flex;justify-content:space-between"><span style="color:#6A5A30">ספק</span><span>${confBadge(c.vendor)} ${r.vendor}</span></div>
-    <div style="display:flex;justify-content:space-between"><span style="color:#6A5A30">תאריך</span><span>${confBadge(c.date)} ${r.date||"—"}</span></div>
-    <div style="display:flex;justify-content:space-between"><span style="color:#6A5A30">קטגוריה</span><span>${r.cat}</span></div>
-    <div style="display:flex;justify-content:space-between;border-top:1px solid #C8C0A0;margin-top:6px;padding-top:6px;font-weight:700;font-size:13px"><span style="color:#6A5A30">סה"כ</span><span>₪${r.amt.toFixed(2)}</span></div>
-    </div>${r.flagged ? `<div style="background:#FEF0E8;border:1px solid rgba(194,65,12,.3);border-radius:8px;padding:10px 13px;margin-top:12px"><div style="font-size:12px;font-weight:700;color:#C2410C;margin-bottom:3px">⚠️ שדות מסומנים</div><div style="font-size:11px;color:#C2410C">${(r.flagFields||[]).join(", ")}</div></div>` : ""}`;
+
+function renderContent() {
+  const tabs = getTabs();
+  const role = viewingRole;
+  let html = '';
+
+  html += '<div class="page-section active" id="sec-field">';
+  html += '<h2 class="section-title">📋 הגשת דיווח הוצאה</h2>';
+  html += '<div class="stats-grid">';
+  html += '<div class="stat-card"><div class="stat-num">12</div><div class="stat-lbl">דיווחים החודש</div></div>';
+  html += '<div class="stat-card"><div class="stat-num">3</div><div class="stat-lbl">ממתינים לאישור</div></div>';
+  html += '<div class="stat-card"><div class="stat-num">₪2,340</div><div class="stat-lbl">סה"כ הוגש</div></div>';
+  html += '</div>';
+  html += '<div class="card"><div class="card-title">הגשת הוצאה חדשה</div>';
+  html += '<div class="form-row"><div class="form-group"><label>קטגוריה</label><input type="text" placeholder="נסיעות / מזון / ציוד"></div>';
+  html += '<div class="form-group"><label>סכום (₪)</label><input type="number" placeholder="0.00"></div></div>';
+  html += '<div class="form-group"><label>תיאור</label><input type="text" placeholder="פרטי ההוצאה"></div>';
+  html += '<div class="form-group"><label>תאריך</label><input type="date"></div>';
+  html += '<button class="btn btn-primary" style="margin-top:8px">📤 שלח לאישור</button></div>';
+  html += '<div class="card"><div class="card-title">הדיווחים שלי</div>';
+  html += '<table class="expenses-table"><thead><tr><th>תאריך</th><th>קטגוריה</th><th>סכום</th><th>סטטוס</th></tr></thead>';
+  html += '<tbody>';
+  html += '<tr><td>01/05/2026</td><td>נסיעות</td><td>₪150</td><td><span class="status-badge status-approved">אושר</span></td></tr>';
+  html += '<tr><td>03/05/2026</td><td>מזון</td><td>₪85</td><td><span class="status-badge status-pending">ממתין</span></td></tr>';
+  html += '<tr><td>05/05/2026</td><td>ציוד</td><td>₪320</td><td><span class="status-badge status-pending">ממתין</span></td></tr>';
+  html += '</tbody></table></div>';
+  html += '</div>';
+
+  if (role === 'manager' || role === 'finance' || role === 'admin') {
+    html += '<div class="page-section" id="sec-manager">';
+    html += '<h2 class="section-title">✅ אישור דיווחים</h2>';
+    html += '<div class="stats-grid">';
+    html += '<div class="stat-card"><div class="stat-num">7</div><div class="stat-lbl">ממתינים לאישור</div></div>';
+    html += '<div class="stat-card"><div class="stat-num">23</div><div class="stat-lbl">אושרו החודש</div></div>';
+    html += '<div class="stat-card"><div class="stat-num">₪8,920</div><div class="stat-lbl">סה"כ אושר</div></div>';
+    html += '</div>';
+    html += '<div class="card"><div class="card-title">דיווחים ממתינים לאישור</div>';
+    html += '<table class="expenses-table"><thead><tr><th>מגיש</th><th>תאריך</th><th>קטגוריה</th><th>סכום</th><th>פעולה</th></tr></thead>';
+    html += '<tbody>';
+    html += '<tr><td>דנה שמש</td><td>03/05/2026</td><td>מזון</td><td>₪85</td><td><button class="btn btn-success" style="padding:5px 12px;font-size:12px">אשר</button> <button class="btn btn-danger" style="padding:5px 12px;font-size:12px">דחה</button></td></tr>';
+    html += '<tr><td>דנה שמש</td><td>05/05/2026</td><td>ציוד</td><td>₪320</td><td><button class="btn btn-success" style="padding:5px 12px;font-size:12px">אשר</button> <button class="btn btn-danger" style="padding:5px 12px;font-size:12px">דחה</button></td></tr>';
+    html += '</tbody></table></div>';
+    html += '</div>';
+  }
+
+  if (role === 'finance' || role === 'admin') {
+    html += '<div class="page-section" id="sec-finance">';
+    html += '<h2 class="section-title">💰 דוחות כספיים</h2>';
+    html += '<div class="stats-grid">';
+    html += '<div class="stat-card"><div class="stat-num">₪15,400</div><div class="stat-lbl">תקציב חודשי</div></div>';
+    html += '<div class="stat-card"><div class="stat-num">₪8,920</div><div class="stat-lbl">נוצל</div></div>';
+    html += '<div class="stat-card"><div class="stat-num">₪6,480</div><div class="stat-lbl">יתרה</div></div>';
+    html += '<div class="stat-card"><div class="stat-num">58%</div><div class="stat-lbl">ניצול תקציב</div></div>';
+    html += '</div>';
+    html += '<div class="card"><div class="card-title">דוח לפי קטגוריה</div>';
+    html += '<table class="expenses-table"><thead><tr><th>קטגוריה</th><th>מספר הוצאות</th><th>סה"כ</th><th>% מהתקציב</th></tr></thead>';
+    html += '<tbody>';
+    html += '<tr><td>נסיעות</td><td>14</td><td>₪3,200</td><td>21%</td></tr>';
+    html += '<tr><td>מזון</td><td>8</td><td>₪1,840</td><td>12%</td></tr>';
+    html += '<tr><td>ציוד</td><td>5</td><td>₪2,560</td><td>17%</td></tr>';
+    html += '<tr><td>אחר</td><td>3</td><td>₪1,320</td><td>9%</td></tr>';
+    html += '</tbody></table>';
+    html += '<div style="margin-top:16px"><button class="btn btn-outline">📊 ייצא לאקסל</button> <button class="btn btn-outline" style="margin-right:8px">📄 ייצא PDF</button></div></div>';
+    html += '</div>';
+  }
+
+  if (role === 'admin') {
+    html += '<div class="page-section" id="sec-admin">';
+    html += '<h2 class="section-title">⚙️ ניהול מערכת</h2>';
+    html += '<div class="card"><div class="card-title">משתמשי המערכת</div>';
+    html += '<table class="expenses-table"><thead><tr><th>שם</th><th>אימייל</th><th>תפקיד</th><th>ארגון</th><th>פעולה</th></tr></thead>';
+    html += '<tbody>';
+    html += '<tr><td>יסמין (בעלים)</td><td>yasminko27@gmail.com</td><td><span class="status-badge role-admin">אדמין</span></td><td>org_001</td><td>-</td></tr>';
+    html += '<tr><td>דנה שמש</td><td>dana@pettycash.app</td><td><span class="status-badge role-field">רכזת שטח</span></td><td>org_001</td><td><button class="btn btn-outline" style="padding:4px 10px;font-size:12px">ערוך</button></td></tr>';
+    html += '<tr><td>מיכל כהן</td><td>michal@pettycash.app</td><td><span class="status-badge role-manager">מנהלת</span></td><td>org_001</td><td><button class="btn btn-outline" style="padding:4px 10px;font-size:12px">ערוך</button></td></tr>';
+    html += '<tr><td>יוסי לוי</td><td>yossi@pettycash.app</td><td><span class="status-badge role-finance">כספים</span></td><td>org_001</td><td><button class="btn btn-outline" style="padding:4px 10px;font-size:12px">ערוך</button></td></tr>';
+    html += '</tbody></table>';
+    html += '<div style="margin-top:16px"><button class="btn btn-primary">➕ הוסף משתמש</button></div></div>';
+    html += '<div class="card"><div class="card-title">הגדרות ארגון</div>';
+    html += '<div class="form-group"><label>שם הארגון</label><input type="text" value="ארגון דמו" style="max-width:300px"></div>';
+    html += '<div class="form-group"><label>תקציב חודשי (₪)</label><input type="number" value="15400" style="max-width:300px"></div>';
+    html += '<button class="btn btn-primary" style="margin-top:8px">💾 שמור שינויים</button></div>';
+    html += '</div>';
+  }
+
+  document.getElementById('app-content').innerHTML = html;
+  const firstTab = tabs[0];
+  if (firstTab) showTab(firstTab.id);
 }
-function closeRec() { document.getElementById("rec-overlay").classList.remove("open"); }
-(async () => {
+
+async function init() {
+  showLoading(true);
   try {
     const { data: { session } } = await sb.auth.getSession();
-    if (session?.user) {
-      const email = session.user.email?.toLowerCase() || "";
-      const emailRoleMap = {
-        "dana@pettycash.app": { role:"coordinator", name:"דנה שמש" },
-        "michal@pettycash.app": { role:"manager", name:"מיכל כהן" },
-        "yossi@pettycash.app": { role:"finance", name:"יוסי לוי" },
-        "hila@pettycash.app": { role:"admin", name:"הילה רז" },
-        "yasminko27@gmail.com": { role:"admin", name:"יסמין" }
-      };
-      let role = "coordinator";
-      let name = email.split("@")[0];
-      const mapped = emailRoleMap[email];
-      if (mapped) { role = mapped.role; name = mapped.name; }
-      try {
-        const { data: profile, error: pErr } = await sb.from("profiles").select("full_name,role,org_id").eq("id", session.user.id).single();
-        if (!pErr && profile?.full_name) {
-          const roleMap = { field:"coordinator", manager:"manager", finance:"finance", admin:"admin" };
-          role = roleMap[profile.role] || role;
-          name = profile.full_name;
-        }
-      } catch(e) {}
-      enterApp(name, role);
+    if (session) {
+      const profile = await loadProfile(session.user);
+      if (profile) {
+        currentUser = session.user;
+        currentProfile = profile;
+        viewingRole = profile.role;
+        initApp();
+        showApp();
+      } else {
+        showLogin();
+      }
     } else {
-      document.getElementById("loading").style.display = "none";
-      document.getElementById("login-screen").style.display = "flex";
+      showLogin();
     }
   } catch(e) {
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("login-screen").style.display = "flex";
+    console.error('Init error:', e);
+    showLogin();
   } finally {
-    document.getElementById("loading").style.display = "none";
+    showLoading(false);
   }
-})();)();
+}
+
+init();
 </script>
 </body>
 </html>
